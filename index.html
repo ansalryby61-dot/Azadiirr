@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>شركة أزادير - النظام السحابي المستقر</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #16a085;
+            --accent-color: #e74c3c;
+            --cloud-color: #2980b9;
+            --bg-color: #f8f9fa;
+            --text-color: #333;
+        }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 15px; }
+        .container { max-width: 1000px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        header { text-align: center; margin-bottom: 20px; border-bottom: 3px solid var(--secondary-color); padding-bottom: 10px; }
+        header h1 { color: var(--primary-color); margin: 0; font-size: 26px; }
+        .cloud-controls { display: flex; gap: 10px; margin-bottom: 20px; }
+        .cloud-btn { flex: 1; padding: 12px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; font-size: 14px; text-align: center; }
+        .btn-upload { background-color: var(--cloud-color); }
+        .btn-download { background-color: #27ae60; }
+        .main-categories { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin-bottom: 25px; }
+        .cat-btn { padding: 12px 5px; border: 2px solid var(--primary-color); background: white; color: var(--primary-color); font-weight: bold; font-size: 14px; cursor: pointer; border-radius: 8px; text-align: center; }
+        .cat-btn.active { background: var(--primary-color); color: white; }
+        .action-tabs { display: flex; background: #eee; border-radius: 6px; padding: 4px; margin-bottom: 20px; }
+        .action-btn { flex: 1; padding: 10px; border: none; background: none; font-weight: bold; cursor: pointer; border-radius: 4px; }
+        .action-btn.active { background: var(--secondary-color); color: white; }
+        .view-section, .form-section { display: none; }
+        .view-section.active, .form-section.active { display: block; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; }
+        input[type="text"], input[type="number"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 15px; }
+        button.btn { background-color: var(--secondary-color); color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: right; }
+        th { background-color: var(--primary-color); color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .opt-btn { padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
+        .edit-btn { background-color: #f39c12; color: white; }
+        .delete-btn { background-color: var(--accent-color); color: white; }
+        .alert { padding: 12px; background-color: #2ecc71; color: white; border-radius: 6px; margin-bottom: 15px; display: none; text-align: center; font-weight: bold; }
+        .current-cat-title { color: var(--secondary-color); margin-top: 0; border-right: 4px solid var(--secondary-color); padding-right: 8px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header><h1>شركة أزادير</h1><p>النظام السحابي المستقر لقائمة الأسعار</p></header>
+    <div class="cloud-controls">
+        <button class="cloud-btn btn-upload" onclick="uploadToCloud()">☁️ رفع وتحديث الأسعار أونلاين</button>
+        <button class="cloud-btn btn-download" onclick="downloadFromCloud()">🔄 سحب البيانات للهواتف الأخرى</button>
+    </div>
+    <div class="main-categories">
+        <button class="cat-btn active" onclick="switchCategory('pvc')">1. Pvc</button>
+        <button class="cat-btn" onclick="switchCategory('aluminium_ps')">2. ألومنيوم PS</button>
+        <button class="cat-btn" onclick="switchCategory('aluminium_hp')">3. ألومنيوم HP</button>
+        <button class="cat-btn" onclick="switchCategory('accessories_pvc')">4. اكسسوار PVC</button>
+        <button class="cat-btn" onclick="switchCategory('accessories_alum')">5. اكسسوار ألومنيوم</button>
+        <button class="cat-btn" onclick="switchCategory('handrail')">6. درابزين</button>
+        <button class="cat-btn" onclick="switchCategory('gaskets')">7. قومات</button>
+        <button class="cat-btn" onclick="switchCategory('carton')">8. كارتن</button>
+        <button class="cat-btn" onclick="switchCategory('sheets')">9. الواح</button>
+    </div>
+    <h2 class="current-cat-title" id="category-title">القسم الحالي: Pvc</h2>
+    <div class="action-tabs">
+        <button class="action-btn active" id="tab-view-btn" onclick="switchAction('view')">البحث وعرض الأسعار</button>
+        <button class="action-btn" id="tab-add-btn" onclick="switchAction('add')">إضافة منتج جديد</button>
+        <button class="action-btn" id="tab-edit-btn" style="display:none; background:#f39c12; color:white;" onclick="switchAction('edit')">تعديل الحالي</button>
+    </div>
+    <div id="alert-msg" class="alert"></div>
+    <div id="view-section" class="view-section active">
+        <input type="text" id="search-input" style="margin-bottom:15px; width:100%; padding:10px; box-sizing:border-box;" placeholder="ابحث باسم المنتج في هذا القسم..." oninput="renderProducts()">
+        <div style="overflow-x:auto;">
+            <table>
+                <thead><tr><th>اسم المنتج</th><th>سعر الجملة</th><th>سعر البيع</th><th>إجراءات</th></tr></thead>
+                <tbody id="products-table-body"></tbody>
+            </table>
+        </div>
+    </div>
+    <div id="add-section" class="form-section">
+        <h3>إضافة منتج إلى قسم (<span class="insert-cat-name">Pvc</span>)</h3>
+        <form id="add-product-form" onsubmit="addProduct(event)">
+            <div class="form-group"><label>اسم المنتج:</label><input type="text" id="prod-name" required></div>
+            <div class="form-group"><label>سعر الجملة:</label><input type="number" id="prod-wholesale" step="0.01" required></div>
+            <div class="form-group"><label>سعر البيع:</label><input type="number" id="prod-retail" step="0.01" required></div>
+            <button type="submit" class="btn">حفظ في هذا القسم</button>
+        </form>
+    </div>
+    <div id="edit-section" class="form-section">
+        <h3>تعديل المنتج</h3>
+        <form id="edit-product-form" onsubmit="updateProduct(event)">
+            <input type="hidden" id="edit-index">
+            <div class="form-group"><label>اسم المنتج:</label><input type="text" id="edit-prod-name" required></div>
+            <div class="form-group"><label>سعر الجملة الجديد:</label><input type="number" id="edit-prod-wholesale" step="0.01" required></div>
+            <div class="form-group"><label>سعر البيع الجديد:</label><input type="number" id="edit-prod-retail" step="0.01" required></div>
+            <button type="submit" class="btn" style="background-color: #f39c12;">تحديث</button>
+        </form>
+    </div>
+</div>
+<script>
+    const cloudEndpoint = 'https://azadeer-database-default-rtdb.firebaseio.com/data.json';
+    let db = JSON.parse(localStorage.getItem('azadeer_final_db')) || { pvc: [], aluminium_ps: [], aluminium_hp: [], accessories_pvc: [], accessories_alum: [], handrail: [], gaskets: [], carton: [], sheets: [] };
+    let currentCategory = 'pvc';
+    const catNamesAr = { pvc: '1. Pvc', aluminium_ps: '2. ألومنيوم PS', aluminium_hp: '3. ألومنيوم HP', accessories_pvc: '4. اكسسوار PVC', accessories_alum: '5. اكسسوار ألومنيوم', handrail: '6. درابزين', gaskets: '7. قومات', carton: '8. كارتن', sheets: '9. الواح' };
+    
+    function saveLocal() { localStorage.setItem('azadeer_final_db', JSON.stringify(db)); }
+    function uploadToCloud() {
+        showAlert('جاري الرفع للحساب السحابي المفتوح...');
+        fetch(cloudEndpoint, { method: 'PUT', body: JSON.stringify(db) })
+        .then(res => { if(res.ok) showAlert('🚀 تم الرفع بنجاح! الأسعار محدثة الآن عند الجميع.'); })
+        .catch(err => alert('خطأ: ' + err));
+    }
+    function downloadFromCloud() {
+        fetch(cloudEndpoint, { method: 'GET' }).then(res => res.json()).then(data => { if(data) { db = data; saveLocal(); renderProducts(); } });
+    }
+    function switchCategory(catId) { currentCategory = catId; document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active')); const target = Array.from(document.querySelectorAll('.cat-btn')).find(b => b.getAttribute('onclick').includes(catId)); if(target) target.classList.add('active'); document.getElementById('category-title').innerText = "القسم الحالي: " + catNamesAr[catId]; document.querySelectorAll('.insert-cat-name').forEach(el => el.innerText = catNamesAr[catId]); renderProducts(); }
+    function switchAction(type) { document.querySelectorAll('.action-btn, .view-section, .form-section').forEach(el => el.classList.remove('active')); if(type==='view'){ document.getElementById('tab-view-btn').classList.add('active'); document.getElementById('view-section').classList.add('active'); } else if(type==='add'){ document.getElementById('tab-add-btn').classList.add('active'); document.getElementById('add-section').classList.add('active'); } }
+    function renderProducts() {
+        const tbody = document.getElementById('products-table-body'); tbody.innerHTML = '';
+        const searchTxt = document.getElementById('search-input').value.toLowerCase();
+        (db[currentCategory] || []).forEach((prod, index) => {
+            if(prod && prod.name.toLowerCase().includes(searchTxt)) {
+                tbody.innerHTML += `<tr><td><strong>${prod.name}</strong></td><td style="color:#2980b9; font-weight:bold;">${parseFloat(prod.wholesale).toFixed(2)} د.ل</td><td style="color:#27ae60; font-weight:bold;">${parseFloat(prod.retail).toFixed(2)} د.ل</td><td><button class="opt-btn edit-btn" onclick="setupEdit(${index})">تعديل</button></td></tr>`;
+            }
+        });
+    }
+    function addProduct(e) { e.preventDefault(); db[currentCategory].push({ name: document.getElementById('prod-name').value, wholesale: document.getElementById('prod-wholesale').value, retail: document.getElementById('prod-retail').value }); saveLocal(); renderProducts(); document.getElementById('add-product-form').reset(); switchAction('view'); }
+    function setupEdit(index) { const prod = db[currentCategory][index]; document.getElementById('edit-index').value = index; document.getElementById('edit-prod-name').value = prod.name; document.getElementById('edit-prod-wholesale').value = prod.wholesale; document.getElementById('edit-prod-retail').value = prod.retail; document.getElementById('tab-edit-btn').style.display='block'; document.querySelectorAll('.action-btn, .view-section, .form-section').forEach(el => el.classList.remove('active')); document.getElementById('tab-edit-btn').className+=' active'; document.getElementById('edit-section').className+=' active'; }
+    function updateProduct(e) { e.preventDefault(); const index = document.getElementById('edit-index').value; db[currentCategory][index] = { name: document.getElementById('edit-prod-name').value, wholesale: document.getElementById('edit-prod-wholesale').value, retail: document.getElementById('edit-prod-retail').value }; saveLocal(); renderProducts(); document.getElementById('tab-edit-btn').style.display='none'; switchAction('view'); }
+    function showAlert(msg) { const box = document.getElementById('alert-msg'); box.innerText = msg; box.style.display = 'block'; setTimeout(() => box.style.display = 'none', 3000); }
+    window.onload = function() { downloadFromCloud(); };
+</script>
+</body>
+</html>
