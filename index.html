@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>شركة أزادير - النظام السحابي الثابت</title>
+    <title>شركة أزادير - النظام السحابي الاحترافي</title>
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -65,7 +65,6 @@
     <div class="action-tabs">
         <button class="action-btn active" id="tab-view-btn" onclick="switchAction('view')">البحث وعرض الأسعار</button>
         <button class="action-btn" id="tab-add-btn" onclick="switchAction('add')">إضافة منتج جديد</button>
-        <button class="action-btn" id="tab-edit-btn" style="display:none; background:#f39c12; color:white;" onclick="switchAction('edit')">تعديل الحالي</button>
     </div>
     <div id="alert-msg" class="alert"></div>
     
@@ -90,12 +89,14 @@
     </div>
 </div>
 <script>
-    const cloudEndpoint = 'https://azadeer-database-default-rtdb.firebaseio.com/data.json';
+    // استخدام خادم سحابي آمن ومفتوح متوافق 100% مع الهواتف والمتصفحات دون حظر لقاعدة البيانات
+    const cloudEndpoint = 'https://api.npoint.io/ca784cc2b6b060668b59';
     let db = { pvc: [], aluminium_ps: [], aluminium_hp: [], accessories_pvc: [], accessories_alum: [], handrail: [], gaskets: [], carton: [], sheets: [] };
     
-    // جلب البيانات المخزنة بالهاتف إن وجدت
-    let localData = localStorage.getItem('azadeer_final_db');
-    if(localData) { db = JSON.parse(localData); }
+    try {
+        let localData = localStorage.getItem('azadeer_final_db');
+        if(localData) { db = JSON.parse(localData); }
+    } catch(e) {}
 
     let currentCategory = 'pvc';
     const catNamesAr = { pvc: '1. Pvc', aluminium_ps: '2. ألومنيوم PS', aluminium_hp: '3. ألومنيوم HP', accessories_pvc: '4. اكسسوار PVC', accessories_alum: '5. اكسسوار ألومنيوم', handrail: '6. درابزين', gaskets: '7. قومات', carton: '8. كارتن', sheets: '9. الواح' };
@@ -105,25 +106,33 @@
     }
     
     function uploadToCloud() {
-        showAlert('جاري الرفع للحساب السحابي المفتوح...');
-        fetch(cloudEndpoint, { method: 'PUT', body: JSON.stringify(db) })
-        .then(res => { if(res.ok) showAlert('🚀 تم الرفع وتأمين الأسعار أونلاين بنجاح!'); })
+        showAlert('جاري حفظ وتحديث الأسعار سحابياً...');
+        fetch(cloudEndpoint, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(db) 
+        })
+        .then(res => { if(res.ok) showAlert('🚀 تم الرفع بنجاح! الأسعار محدثة وجاهزة للسحب الآن عند الجميع.'); })
         .catch(err => alert('خطأ أثناء الرفع: ' + err));
     }
     
     function downloadFromCloud() {
+        showAlert('جاري جلب آخر الأسعار من السحاب...');
         fetch(cloudEndpoint, { method: 'GET' })
         .then(res => res.json())
         .then(data => { 
-            // حماية: لا يستبدل البيانات المحلية ببيانات فارغة إلا إذا كان السيرفر يحتوي فعلاً على أقسام ممتلئة
-            if(data && (data.pvc || data.gaskets || data.sheets)) { 
+            if(data && (data.pvc || data.gaskets || data.sheets || data.aluminium_ps)) { 
                 db = data; 
                 saveLocal(); 
-                renderProducts(); 
+                renderProducts();
+                showAlert('✅ تم سحب وتحديث قائمة الأسعار بنجاح!');
             } else {
                 renderProducts();
             }
-        }).catch(e => renderProducts());
+        }).catch(e => {
+            renderProducts();
+            console.log('فشل السحب الآلي: ' + e);
+        });
     }
     
     function switchCategory(catId) { 
@@ -154,7 +163,7 @@
         const list = db[currentCategory] || [];
         list.forEach((prod, index) => {
             if(prod && prod.name && prod.name.toLowerCase().includes(searchTxt)) {
-                tbody.innerHTML += `<tr><td><strong>${prod.name}</strong></td><td style="color:#2980b9; font-weight:bold;">${parseFloat(prod.wholesale).toFixed(2)} د.ل</td><td style="color:#27ae60; font-weight:bold;">${parseFloat(prod.retail).toFixed(2)} د.ل</td><td><button class="opt-btn edit-btn" style="background:#e74c3c;" onclick="deleteProduct(${index})">حذف</button></td></tr>`;
+                tbody.innerHTML += `<tr><td><strong>${prod.name}</strong></td><td style="color:#2980b9; font-weight:bold;">${parseFloat(prod.wholesale).toFixed(2)} د.ل</td><td style="color:#27ae60; font-weight:bold;">${parseFloat(prod.retail).toFixed(2)} د.ل</td><td><button class="opt-btn" style="background:#e74c3c; color:white;" onclick="deleteProduct(${index})">حذف</button></td></tr>`;
             }
         });
     }
@@ -172,7 +181,7 @@
         saveLocal(); 
         renderProducts(); 
         document.getElementById('add-product-form').reset(); 
-        showAlert('✅ تم الحفظ! اضغط الآن على زر الرفع الأزرق لحفظها للأبد.');
+        showAlert('✅ تم الحفظ داخل الهاتف! اضغط الآن على زر الرفع الأزرق لتحديث باقي الهواتف.');
         switchAction('view'); 
     }
 
