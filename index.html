@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>شركة أزادير - النظام السحابي الاحترافي</title>
+    <title>شركة أزادير - النظام السحابي الثابت</title>
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -39,7 +39,6 @@
         tr:nth-child(even) { background-color: #f9f9f9; }
         .opt-btn { padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
         .edit-btn { background-color: #f39c12; color: white; }
-        .delete-btn { background-color: var(--accent-color); color: white; }
         .alert { padding: 12px; background-color: #2ecc71; color: white; border-radius: 6px; margin-bottom: 15px; display: none; text-align: center; font-weight: bold; }
         .current-cat-title { color: var(--secondary-color); margin-top: 0; border-right: 4px solid var(--secondary-color); padding-right: 8px; }
     </style>
@@ -71,7 +70,7 @@
     <div id="alert-msg" class="alert"></div>
     
     <div id="view-section" class="view-section active">
-        <input type="text" id="search-input" style="margin-bottom:15px;" placeholder="ابحث باسم المنتج في هذا القسم..." oninput="renderProducts()">
+        <input type="text" id="search-input" style="margin-bottom:15px; width:100%; padding:10px; box-sizing:border-box;" placeholder="ابحث باسم المنتج في هذا القسم..." oninput="renderProducts()">
         <div style="overflow-x:auto;">
             <table>
                 <thead><tr><th>اسم المنتج</th><th>سعر الجملة</th><th>سعر البيع</th><th>إجراءات</th></tr></thead>
@@ -89,35 +88,42 @@
             <button type="submit" class="btn">حفظ في هذا القسم</button>
         </form>
     </div>
-    
-    <div id="edit-section" class="form-section">
-        <h3>تعديل المنتج</h3>
-        <form id="edit-product-form" onsubmit="updateProduct(event)">
-            <input type="hidden" id="edit-index">
-            <div class="form-group"><label>اسم المنتج:</label><input type="text" id="edit-prod-name" required></div>
-            <div class="form-group"><label>سعر الجملة الجديد:</label><input type="number" id="edit-prod-wholesale" step="0.01" required></div>
-            <div class="form-group"><label>سعر البيع الجديد:</label><input type="number" id="edit-prod-retail" step="0.01" required></div>
-            <button type="submit" class="btn" style="background-color: #f39c12;">تحديث</button>
-        </form>
-    </div>
 </div>
 <script>
     const cloudEndpoint = 'https://azadeer-database-default-rtdb.firebaseio.com/data.json';
-    let db = JSON.parse(localStorage.getItem('azadeer_final_db')) || { pvc: [], aluminium_ps: [], aluminium_hp: [], accessories_pvc: [], accessories_alum: [], handrail: [], gaskets: [], carton: [], sheets: [] };
+    let db = { pvc: [], aluminium_ps: [], aluminium_hp: [], accessories_pvc: [], accessories_alum: [], handrail: [], gaskets: [], carton: [], sheets: [] };
+    
+    // جلب البيانات المخزنة بالهاتف إن وجدت
+    let localData = localStorage.getItem('azadeer_final_db');
+    if(localData) { db = JSON.parse(localData); }
+
     let currentCategory = 'pvc';
     const catNamesAr = { pvc: '1. Pvc', aluminium_ps: '2. ألومنيوم PS', aluminium_hp: '3. ألومنيوم HP', accessories_pvc: '4. اكسسوار PVC', accessories_alum: '5. اكسسوار ألومنيوم', handrail: '6. درابزين', gaskets: '7. قومات', carton: '8. كارتن', sheets: '9. الواح' };
     
-    function saveLocal() { localStorage.setItem('azadeer_final_db', JSON.stringify(db)); }
+    function saveLocal() { 
+        localStorage.setItem('azadeer_final_db', JSON.stringify(db)); 
+    }
     
     function uploadToCloud() {
         showAlert('جاري الرفع للحساب السحابي المفتوح...');
         fetch(cloudEndpoint, { method: 'PUT', body: JSON.stringify(db) })
-        .then(res => { if(res.ok) showAlert('🚀 تم الرفع بنجاح! الأسعار محدثة الآن عند الجميع.'); })
+        .then(res => { if(res.ok) showAlert('🚀 تم الرفع وتأمين الأسعار أونلاين بنجاح!'); })
         .catch(err => alert('خطأ أثناء الرفع: ' + err));
     }
     
     function downloadFromCloud() {
-        fetch(cloudEndpoint, { method: 'GET' }).then(res => res.json()).then(data => { if(data) { db = data; saveLocal(); renderProducts(); } }).catch(e => console.log(e));
+        fetch(cloudEndpoint, { method: 'GET' })
+        .then(res => res.json())
+        .then(data => { 
+            // حماية: لا يستبدل البيانات المحلية ببيانات فارغة إلا إذا كان السيرفر يحتوي فعلاً على أقسام ممتلئة
+            if(data && (data.pvc || data.gaskets || data.sheets)) { 
+                db = data; 
+                saveLocal(); 
+                renderProducts(); 
+            } else {
+                renderProducts();
+            }
+        }).catch(e => renderProducts());
     }
     
     function switchCategory(catId) { 
@@ -137,20 +143,18 @@
         } else if(type==='add'){ 
             document.getElementById('tab-add-btn').classList.add('active'); 
             document.getElementById('add-section').classList.add('active'); 
-        } else if(type==='edit'){
-            document.getElementById('tab-edit-btn').classList.add('active'); 
-            document.getElementById('edit-section').classList.add('active'); 
         }
     }
     
     function renderProducts() {
         const tbody = document.getElementById('products-table-body'); 
+        if(!tbody) return;
         tbody.innerHTML = '';
         const searchTxt = document.getElementById('search-input').value.toLowerCase();
         const list = db[currentCategory] || [];
         list.forEach((prod, index) => {
             if(prod && prod.name && prod.name.toLowerCase().includes(searchTxt)) {
-                tbody.innerHTML += `<tr><td><strong>${prod.name}</strong></td><td style="color:#2980b9; font-weight:bold;">${parseFloat(prod.wholesale).toFixed(2)} د.ل</td><td style="color:#27ae60; font-weight:bold;">${parseFloat(prod.retail).toFixed(2)} د.ل</td><td><button class="opt-btn edit-btn" onclick="setupEdit(${index})">تعديل</button></td></tr>`;
+                tbody.innerHTML += `<tr><td><strong>${prod.name}</strong></td><td style="color:#2980b9; font-weight:bold;">${parseFloat(prod.wholesale).toFixed(2)} د.ل</td><td style="color:#27ae60; font-weight:bold;">${parseFloat(prod.retail).toFixed(2)} د.ل</td><td><button class="opt-btn edit-btn" style="background:#e74c3c;" onclick="deleteProduct(${index})">حذف</button></td></tr>`;
             }
         });
     }
@@ -158,45 +162,31 @@
     function addProduct(e) { 
         e.preventDefault(); 
         if(!db[currentCategory]) db[currentCategory] = [];
+        
         db[currentCategory].push({ 
             name: document.getElementById('prod-name').value, 
             wholesale: document.getElementById('prod-wholesale').value, 
             retail: document.getElementById('prod-retail').value 
         }); 
+        
         saveLocal(); 
         renderProducts(); 
         document.getElementById('add-product-form').reset(); 
-        showAlert('✅ تم حفظ المنتج محلياً في هذا القسم!');
+        showAlert('✅ تم الحفظ! اضغط الآن على زر الرفع الأزرق لحفظها للأبد.');
         switchAction('view'); 
     }
-    
-    function setupEdit(index) { 
-        const prod = db[currentCategory][index]; 
-        document.getElementById('edit-index').value = index; 
-        document.getElementById('edit-prod-name').value = prod.name; 
-        document.getElementById('edit-prod-wholesale').value = prod.wholesale; 
-        document.getElementById('edit-prod-retail').value = prod.retail; 
-        document.getElementById('tab-edit-btn').style.display='block'; 
-        switchAction('edit');
-    }
-    
-    function updateProduct(e) { 
-        e.preventDefault(); 
-        const index = document.getElementById('edit-index').value; 
-        db[currentCategory][index] = { 
-            name: document.getElementById('edit-prod-name').value, 
-            wholesale: document.getElementById('edit-prod-wholesale').value, 
-            retail: document.getElementById('edit-prod-retail').value 
-        }; 
-        saveLocal(); 
-        renderProducts(); 
-        document.getElementById('tab-edit-btn').style.display='none'; 
-        showAlert('⚙️ تم تعديل المنتج بنجاح!');
-        switchAction('view'); 
+
+    function deleteProduct(index) {
+        if(confirm("هل أنت متأكد من حذف هذا المنتج؟")) {
+            db[currentCategory].splice(index, 1);
+            saveLocal();
+            renderProducts();
+        }
     }
     
     function showAlert(msg) { 
         const box = document.getElementById('alert-msg'); 
+        if(!box) return;
         box.innerText = msg; 
         box.style.display = 'block'; 
         setTimeout(() => box.style.display = 'none', 4000); 
