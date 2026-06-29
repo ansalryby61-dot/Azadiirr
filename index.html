@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>شركة أزادير - النظام السحابي المستقر</title>
+    <title>شركة أزادير - النظام السحابي الاحترافي</title>
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -52,25 +52,26 @@
         <button class="cloud-btn btn-download" onclick="downloadFromCloud()">🔄 سحب البيانات للهواتف الأخرى</button>
     </div>
     <div class="main-categories">
-        <button class="cat-btn active" onclick="switchCategory('pvc')">1. Pvc</button>
-        <button class="cat-btn" onclick="switchCategory('aluminium_ps')">2. ألومنيوم PS</button>
-        <button class="cat-btn" onclick="switchCategory('aluminium_hp')">3. ألومنيوم HP</button>
-        <button class="cat-btn" onclick="switchCategory('accessories_pvc')">4. اكسسوار PVC</button>
-        <button class="cat-btn" onclick="switchCategory('accessories_alum')">5. اكسسوار ألومنيوم</button>
-        <button class="cat-btn" onclick="switchCategory('handrail')">6. درابزين</button>
-        <button class="cat-btn" onclick="switchCategory('gaskets')">7. قومات</button>
-        <button class="cat-btn" onclick="switchCategory('carton')">8. كارتن</button>
-        <button class="cat-btn" onclick="switchCategory('sheets')">9. الواح</button>
+        <button class="cat-btn active" id="btn-pvc" onclick="switchCategory('pvc')">1. Pvc</button>
+        <button class="cat-btn" id="btn-aluminium_ps" onclick="switchCategory('aluminium_ps')">2. ألومنيوم PS</button>
+        <button class="cat-btn" id="btn-aluminium_hp" onclick="switchCategory('aluminium_hp')">3. ألومنيوم HP</button>
+        <button class="cat-btn" id="btn-accessories_pvc" onclick="switchCategory('accessories_pvc')">4. اكسسوار PVC</button>
+        <button class="cat-btn" id="btn-accessories_alum" onclick="switchCategory('accessories_alum')">5. اكسسوار ألومنيوم</button>
+        <button class="cat-btn" id="btn-handrail" onclick="switchCategory('handrail')">6. درابزين</button>
+        <button class="cat-btn" id="btn-gaskets" onclick="switchCategory('gaskets')">7. قومات</button>
+        <button class="cat-btn" id="btn-carton" onclick="switchCategory('carton')">8. كارتن</button>
+        <button class="cat-btn" id="btn-sheets" onclick="switchCategory('sheets')">9. الواح</button>
     </div>
-    <h2 class="current-cat-title" id="category-title">القسم الحالي: Pvc</h2>
+    <h2 class="current-cat-title" id="category-title">القسم الحالي: 1. Pvc</h2>
     <div class="action-tabs">
         <button class="action-btn active" id="tab-view-btn" onclick="switchAction('view')">البحث وعرض الأسعار</button>
         <button class="action-btn" id="tab-add-btn" onclick="switchAction('add')">إضافة منتج جديد</button>
         <button class="action-btn" id="tab-edit-btn" style="display:none; background:#f39c12; color:white;" onclick="switchAction('edit')">تعديل الحالي</button>
     </div>
     <div id="alert-msg" class="alert"></div>
+    
     <div id="view-section" class="view-section active">
-        <input type="text" id="search-input" style="margin-bottom:15px; width:100%; padding:10px; box-sizing:border-box;" placeholder="ابحث باسم المنتج في هذا القسم..." oninput="renderProducts()">
+        <input type="text" id="search-input" style="margin-bottom:15px;" placeholder="ابحث باسم المنتج في هذا القسم..." oninput="renderProducts()">
         <div style="overflow-x:auto;">
             <table>
                 <thead><tr><th>اسم المنتج</th><th>سعر الجملة</th><th>سعر البيع</th><th>إجراءات</th></tr></thead>
@@ -78,8 +79,9 @@
             </table>
         </div>
     </div>
+    
     <div id="add-section" class="form-section">
-        <h3>إضافة منتج إلى قسم (<span class="insert-cat-name">Pvc</span>)</h3>
+        <h3>إضافة منتج إلى قسم (<span id="insert-cat-name">1. Pvc</span>)</h3>
         <form id="add-product-form" onsubmit="addProduct(event)">
             <div class="form-group"><label>اسم المنتج:</label><input type="text" id="prod-name" required></div>
             <div class="form-group"><label>سعر الجملة:</label><input type="number" id="prod-wholesale" step="0.01" required></div>
@@ -87,6 +89,7 @@
             <button type="submit" class="btn">حفظ في هذا القسم</button>
         </form>
     </div>
+    
     <div id="edit-section" class="form-section">
         <h3>تعديل المنتج</h3>
         <form id="edit-product-form" onsubmit="updateProduct(event)">
@@ -105,30 +108,99 @@
     const catNamesAr = { pvc: '1. Pvc', aluminium_ps: '2. ألومنيوم PS', aluminium_hp: '3. ألومنيوم HP', accessories_pvc: '4. اكسسوار PVC', accessories_alum: '5. اكسسوار ألومنيوم', handrail: '6. درابزين', gaskets: '7. قومات', carton: '8. كارتن', sheets: '9. الواح' };
     
     function saveLocal() { localStorage.setItem('azadeer_final_db', JSON.stringify(db)); }
+    
     function uploadToCloud() {
         showAlert('جاري الرفع للحساب السحابي المفتوح...');
         fetch(cloudEndpoint, { method: 'PUT', body: JSON.stringify(db) })
         .then(res => { if(res.ok) showAlert('🚀 تم الرفع بنجاح! الأسعار محدثة الآن عند الجميع.'); })
-        .catch(err => alert('خطأ: ' + err));
+        .catch(err => alert('خطأ أثناء الرفع: ' + err));
     }
+    
     function downloadFromCloud() {
-        fetch(cloudEndpoint, { method: 'GET' }).then(res => res.json()).then(data => { if(data) { db = data; saveLocal(); renderProducts(); } });
+        fetch(cloudEndpoint, { method: 'GET' }).then(res => res.json()).then(data => { if(data) { db = data; saveLocal(); renderProducts(); } }).catch(e => console.log(e));
     }
-    function switchCategory(catId) { currentCategory = catId; document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active')); const target = Array.from(document.querySelectorAll('.cat-btn')).find(b => b.getAttribute('onclick').includes(catId)); if(target) target.classList.add('active'); document.getElementById('category-title').innerText = "القسم الحالي: " + catNamesAr[catId]; document.querySelectorAll('.insert-cat-name').forEach(el => el.innerText = catNamesAr[catId]); renderProducts(); }
-    function switchAction(type) { document.querySelectorAll('.action-btn, .view-section, .form-section').forEach(el => el.classList.remove('active')); if(type==='view'){ document.getElementById('tab-view-btn').classList.add('active'); document.getElementById('view-section').classList.add('active'); } else if(type==='add'){ document.getElementById('tab-add-btn').classList.add('active'); document.getElementById('add-section').classList.add('active'); } }
+    
+    function switchCategory(catId) { 
+        currentCategory = catId; 
+        document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById('btn-' + catId).classList.add('active');
+        document.getElementById('category-title').innerText = "القسم الحالي: " + catNamesAr[catId]; 
+        document.getElementById('insert-cat-name').innerText = catNamesAr[catId]; 
+        renderProducts(); 
+    }
+    
+    function switchAction(type) { 
+        document.querySelectorAll('.action-btn, .view-section, .form-section').forEach(el => el.classList.remove('active')); 
+        if(type==='view'){ 
+            document.getElementById('tab-view-btn').classList.add('active'); 
+            document.getElementById('view-section').classList.add('active'); 
+        } else if(type==='add'){ 
+            document.getElementById('tab-add-btn').classList.add('active'); 
+            document.getElementById('add-section').classList.add('active'); 
+        } else if(type==='edit'){
+            document.getElementById('tab-edit-btn').classList.add('active'); 
+            document.getElementById('edit-section').classList.add('active'); 
+        }
+    }
+    
     function renderProducts() {
-        const tbody = document.getElementById('products-table-body'); tbody.innerHTML = '';
+        const tbody = document.getElementById('products-table-body'); 
+        tbody.innerHTML = '';
         const searchTxt = document.getElementById('search-input').value.toLowerCase();
-        (db[currentCategory] || []).forEach((prod, index) => {
-            if(prod && prod.name.toLowerCase().includes(searchTxt)) {
+        const list = db[currentCategory] || [];
+        list.forEach((prod, index) => {
+            if(prod && prod.name && prod.name.toLowerCase().includes(searchTxt)) {
                 tbody.innerHTML += `<tr><td><strong>${prod.name}</strong></td><td style="color:#2980b9; font-weight:bold;">${parseFloat(prod.wholesale).toFixed(2)} د.ل</td><td style="color:#27ae60; font-weight:bold;">${parseFloat(prod.retail).toFixed(2)} د.ل</td><td><button class="opt-btn edit-btn" onclick="setupEdit(${index})">تعديل</button></td></tr>`;
             }
         });
     }
-    function addProduct(e) { e.preventDefault(); db[currentCategory].push({ name: document.getElementById('prod-name').value, wholesale: document.getElementById('prod-wholesale').value, retail: document.getElementById('prod-retail').value }); saveLocal(); renderProducts(); document.getElementById('add-product-form').reset(); switchAction('view'); }
-    function setupEdit(index) { const prod = db[currentCategory][index]; document.getElementById('edit-index').value = index; document.getElementById('edit-prod-name').value = prod.name; document.getElementById('edit-prod-wholesale').value = prod.wholesale; document.getElementById('edit-prod-retail').value = prod.retail; document.getElementById('tab-edit-btn').style.display='block'; document.querySelectorAll('.action-btn, .view-section, .form-section').forEach(el => el.classList.remove('active')); document.getElementById('tab-edit-btn').className+=' active'; document.getElementById('edit-section').className+=' active'; }
-    function updateProduct(e) { e.preventDefault(); const index = document.getElementById('edit-index').value; db[currentCategory][index] = { name: document.getElementById('edit-prod-name').value, wholesale: document.getElementById('edit-prod-wholesale').value, retail: document.getElementById('edit-prod-retail').value }; saveLocal(); renderProducts(); document.getElementById('tab-edit-btn').style.display='none'; switchAction('view'); }
-    function showAlert(msg) { const box = document.getElementById('alert-msg'); box.innerText = msg; box.style.display = 'block'; setTimeout(() => box.style.display = 'none', 3000); }
+    
+    function addProduct(e) { 
+        e.preventDefault(); 
+        if(!db[currentCategory]) db[currentCategory] = [];
+        db[currentCategory].push({ 
+            name: document.getElementById('prod-name').value, 
+            wholesale: document.getElementById('prod-wholesale').value, 
+            retail: document.getElementById('prod-retail').value 
+        }); 
+        saveLocal(); 
+        renderProducts(); 
+        document.getElementById('add-product-form').reset(); 
+        showAlert('✅ تم حفظ المنتج محلياً في هذا القسم!');
+        switchAction('view'); 
+    }
+    
+    function setupEdit(index) { 
+        const prod = db[currentCategory][index]; 
+        document.getElementById('edit-index').value = index; 
+        document.getElementById('edit-prod-name').value = prod.name; 
+        document.getElementById('edit-prod-wholesale').value = prod.wholesale; 
+        document.getElementById('edit-prod-retail').value = prod.retail; 
+        document.getElementById('tab-edit-btn').style.display='block'; 
+        switchAction('edit');
+    }
+    
+    function updateProduct(e) { 
+        e.preventDefault(); 
+        const index = document.getElementById('edit-index').value; 
+        db[currentCategory][index] = { 
+            name: document.getElementById('edit-prod-name').value, 
+            wholesale: document.getElementById('edit-prod-wholesale').value, 
+            retail: document.getElementById('edit-prod-retail').value 
+        }; 
+        saveLocal(); 
+        renderProducts(); 
+        document.getElementById('tab-edit-btn').style.display='none'; 
+        showAlert('⚙️ تم تعديل المنتج بنجاح!');
+        switchAction('view'); 
+    }
+    
+    function showAlert(msg) { 
+        const box = document.getElementById('alert-msg'); 
+        box.innerText = msg; 
+        box.style.display = 'block'; 
+        setTimeout(() => box.style.display = 'none', 4000); 
+    }
     window.onload = function() { downloadFromCloud(); };
 </script>
 </body>
