@@ -10,22 +10,26 @@
             --secondary-color: #16a085;
             --accent-color: #e74c3c;
             --edit-color: #f39c12;
-            /* تم تغيير اللون إلى أزرق سماوي خفيف */
-            --share-color: #3498db; 
+            /* تم تحويل اللون البنفسجي المزعج إلى أزرق فاتح مريح وهادئ */
+            --share-color: #4db6ac; 
             --bg-color: #f8f9fa;
             --text-color: #333;
+            /* لون أزرق سماوي ناعم جداً للخلفيات والأزرار */
+            --light-blue-btn: #3498db;
+            --light-blue-bg: #eaf2f8;
         }
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 15px; }
         .container { max-width: 1000px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         header { text-align: center; margin-bottom: 20px; border-bottom: 3px solid var(--secondary-color); padding-bottom: 10px; }
         header h1 { color: var(--primary-color); margin: 0; font-size: 26px; }
         
-        /* تحديث لون صندوق المشاركة ليتناسب مع الأزرق الجديد */
-        .sync-box { background: #ebf5fb; border: 2px dashed var(--share-color); padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
-        .sync-title { font-weight: bold; color: var(--share-color); margin-bottom: 10px; font-size: 15px; }
+        /* تعديل صندوق المشاركة ليصبح بخلفية زرقاء هادئة وحدود متصلة بدلاً من البنفسجي والمنقط */
+        .sync-box { background: var(--light-blue-bg); border: 2px solid #a9ccee; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
+        .sync-title { font-weight: bold; color: var(--primary-color); margin-bottom: 10px; font-size: 15px; }
         .sync-btn { width: 100%; padding: 14px; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; font-size: 15px; transition: 0.2s; }
         .sync-btn:active { transform: scale(0.98); }
-        .btn-share { background-color: var(--share-color); }
+        .btn-share { background-color: var(--light-blue-btn); box-shadow: 0 3px 6px rgba(52, 152, 219, 0.3); }
+        .btn-share:hover { background-color: #2980b9; }
         
         .main-categories { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin-bottom: 25px; }
         .cat-btn { padding: 12px 5px; border: 2px solid var(--primary-color); background: white; color: var(--primary-color); font-weight: bold; font-size: 14px; cursor: pointer; border-radius: 8px; text-align: center; }
@@ -60,6 +64,7 @@
 <div class="container">
     <header><h1>شركة أزادير</h1><p>منظومة مشاركة الأسعار الذكية والفورية</p></header>
     
+    <!-- الصندوق الجديد المحدث بالأزرق الهادئ الفاتح والمريح تماماً -->
     <div class="sync-box">
         <div class="sync-title">📢 لتحديث هواتف الموظفين بالأسعار الجديدة فوراً:</div>
         <button class="sync-btn btn-share" onclick="generateShareLink()">🔗 1. إنشاء رابط التحديث الفوري ونسخه للواتساب</button>
