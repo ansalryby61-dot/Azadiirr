@@ -135,8 +135,8 @@
 </div>
 
 <script>
-    // 👥 هنا قائمة الأرقام السرية المسموح لها بالدخول كأدمن (رقمك ورقم شريكك)
-    const ADMIN_PASSWORDS = ["1234", "5678"]; 
+    // 🔐 تم تعديل الرقم السري ليصبح 2020 فقط للجميع
+    const ADMIN_PASSWORD = "2020"; 
     let isAdmin = false;
 
     let db = { pvc: [], aluminium_ps: [], aluminium_hp: [], accessories_pvc: [], accessories_alum: [], handrail: [], gaskets: [], carton: [], sheets: [] };
@@ -168,18 +168,17 @@
     
     function toggleAdminMode() {
         if (!isAdmin) {
-            let pass = prompt("الرجاء إدخال الرقم السري للمسؤول:");
-            // التحقق إذا كان الرقم المدخل موجوداً ضمن قائمة الأرقام المصرحة
-            if (ADMIN_PASSWORDS.includes(pass)) {
+            let pass = prompt("الرجاء إدخال الرقم السري للمسؤول لفتح الصلاحيات:");
+            if (pass === ADMIN_PASSWORD) {
                 isAdmin = true;
                 document.getElementById('admin-lock-btn').innerText = "🔓 تسجيل خروج من وضع المسؤول";
                 document.getElementById('admin-sync-box').style.display = "block";
                 document.getElementById('admin-action-tabs').style.display = "flex";
                 document.getElementById('th-actions').style.display = "table-cell";
                 renderProducts();
-                showAlert("🔓 تم تفعيل صلاحيات المسؤول بنجاح!");
+                showAlert("🔓 تم تفعيل صلاحيات المسؤول بنجاح بالرمز 2020!");
             } else if (pass !== null) {
-                alert("❌ الرقم السري خاطئ! هذا الوضع مخصص للمسؤولين فقط.");
+                alert("❌ الرقم السري خاطئ! عرض فقط للموظفين.");
             }
         } else {
             isAdmin = false;
