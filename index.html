@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>شركة أزادير - النظام السحابي التلقائي</title>
+    <title>شركة أزادير - النظام السحابي الفوري</title>
     <style>
         :root {
             --primary-color: #2c3e50;
             --secondary-color: #16a085;
             --accent-color: #e74c3c;
             --edit-color: #f39c12;
-            --cloud-color: #2980b9;
+            --share-color: #8e44ad;
             --bg-color: #f8f9fa;
             --text-color: #333;
         }
@@ -19,11 +19,11 @@
         header { text-align: center; margin-bottom: 20px; border-bottom: 3px solid var(--secondary-color); padding-bottom: 10px; }
         header h1 { color: var(--primary-color); margin: 0; font-size: 26px; }
         
-        .sync-box { background: #ebf5fb; border: 2px dashed var(--cloud-color); padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
-        .sync-buttons { display: flex; gap: 10px; }
-        .sync-btn { flex: 1; padding: 12px; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; font-size: 14px; }
-        .btn-export { background-color: var(--cloud-color); }
-        .btn-import { background-color: #27ae60; }
+        .sync-box { background: #f4ecf7; border: 2px dashed var(--share-color); padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
+        .sync-title { font-weight: bold; color: var(--share-color); margin-bottom: 10px; font-size: 15px; }
+        .sync-btn { width: 100%; padding: 14px; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; font-size: 15px; transition: 0.2s; }
+        .sync-btn:active { transform: scale(0.98); }
+        .btn-share { background-color: var(--share-color); }
         
         .main-categories { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin-bottom: 25px; }
         .cat-btn { padding: 12px 5px; border: 2px solid var(--primary-color); background: white; color: var(--primary-color); font-weight: bold; font-size: 14px; cursor: pointer; border-radius: 8px; text-align: center; }
@@ -56,14 +56,11 @@
 </head>
 <body>
 <div class="container">
-    <header><h1>شركة أزادير</h1><p>النظام السحابي التلقائي الفوري لقوائم الأسعار</p></header>
+    <header><h1>شركة أزادير</h1><p>منظومة مشاركة الأسعار الذكية والفورية</p></header>
     
-    <!-- لوحة التحكم السحابية المباشرة بضغطة زر -->
     <div class="sync-box">
-        <div class="sync-buttons">
-            <button class="sync-btn btn-export" onclick="uploadToCloud()">☁️ تحديث الأسعار في السحابة</button>
-            <button class="sync-btn btn-import" onclick="downloadFromCloud()">🔄 سحب وتحديث الأسعار فوراً</button>
-        </div>
+        <div class="sync-title">📢 لتحديث هواتف الموظفين بالأسعار الجديدة فوراً:</div>
+        <button class="sync-btn btn-share" onclick="generateShareLink()">🔗 1. إنشاء رابط التحديث الفوري ونسخه للواتساب</button>
     </div>
 
     <div class="main-categories">
@@ -119,57 +116,58 @@
 </div>
 
 <script>
-    // سيرفر سحابي حقيقي ومفتوح مخصص لمتصفحات الهواتف
-    const cloudUrl = 'https://api.jsonbin.io/v3/b/66847ba4ad19ca34f8823f39';
-    const apiKey = '$2a$10$Wp97WzKUnpbybKk7qX9pU.lM7b6jW3xP6L4y7Q2bYn6Wz7z7z7z7z'; // مفتاح وصول آمن مخصص لك
-
     let db = { pvc: [], aluminium_ps: [], aluminium_hp: [], accessories_pvc: [], accessories_alum: [], handrail: [], gaskets: [], carton: [], sheets: [] };
     
-    let localData = localStorage.getItem('azadeer_cloud_db');
-    if(localData) { try { db = JSON.parse(localData); } catch(e){} }
+    // 1. فحص أولاً إذا فتح الموظف الرابط المشترك الذي يحتوي البيانات
+    const urlParams = new URLSearchParams(window.location.search);
+    const sharedData = urlParams.get('update');
+    
+    if(sharedData) {
+        try {
+            // فك التشفير واستخراج البيانات المحدثة
+            const decodedData = JSON.parse(decodeURIComponent(escape(atob(sharedData))));
+            if(decodedData && decodedData.pvc) {
+                db = decodedData;
+                localStorage.setItem('azadeer_link_db', JSON.stringify(db));
+                // تنظيف الرابط لكي لا تتكرر العملية عند إعادة تحديث الصفحة
+                window.history.replaceState({}, document.title, window.location.pathname);
+                alert('✅ مبروك! تم سحب وتحديث كامل قوائم الأسعار الجديدة بنجاح التام!');
+            }
+        } catch(e) {
+            alert('حدث خطأ أثناء قراءة رابط التحديث الجاري.');
+        }
+    } else {
+        // إذا فتح التطبيق عادي يقرأ من الذاكرة المحلية للهاتف
+        let localData = localStorage.getItem('azadeer_link_db');
+        if(localData) { try { db = JSON.parse(localData); } catch(e){} }
+    }
 
     let currentCategory = 'pvc';
     const catNamesAr = { pvc: '1. Pvc', aluminium_ps: '2. ألومنيوم PS', aluminium_hp: '3. ألومنيوم HP', accessories_pvc: '4. اكسسوار PVC', accessories_alum: '5. اكسسوار ألومنيوم', handrail: '6. درابزين', gaskets: '7. قومات', carton: '8. كارتن', sheets: '9. الواح' };
     
     function saveLocal() { 
-        localStorage.setItem('azadeer_cloud_db', JSON.stringify(db)); 
+        localStorage.setItem('azadeer_link_db', JSON.stringify(db)); 
     }
     
-    // ☁️ الرفع التلقائي للسحابة بضغطة زر واحدة
-    function uploadToCloud() {
-        showAlert('⏳ جاري تحديث وحفظ الأسعار على السيرفر السحابي...');
-        fetch(cloudUrl, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Master-Key': apiKey
-            },
-            body: JSON.stringify(db)
-        })
-        .then(res => { if(res.ok) showAlert('🚀 ممتاز! تم تحديث السحابة بنجاح، يمكن لكل الهواتف السحب الآن.'); else alert('حدث خطأ في الرفع'); })
-        .catch(err => alert('خطأ في الشبكة: ' + err));
-    }
-    
-    // 🔄 السحب التلقائي الفوري للهواتف الأخرى بضغطة زر واحدة
-    function downloadFromCloud() {
-        showAlert('⏳ جاري جلب الأسعار المحدثة من السيرفر...');
-        fetch(cloudUrl, {
-            method: 'GET',
-            headers: { 'X-Master-Key': apiKey }
-        })
-        .then(res => res.json())
-        .then(resData => {
-            if(resData && resData.record) {
-                db = resData.record;
-                saveLocal();
-                renderProducts();
-                showAlert('✅ تم سحب وتحديث قائمة الأسعار بنجاح التام!');
-            }
-        })
-        .catch(err => {
-            showAlert('❌ فشل السحب، يرجى التحقق من الإنترنت.');
-            console.log(err);
-        });
+    // 🔗 إنشاء الرابط السحابي الذكي الفوري بضغطة زر
+    function generateShareLink() {
+        try {
+            // تحويل البضاعة إلى كود مشفر مدمج داخل الرابط نفسه
+            const jsonStr = JSON.stringify(db);
+            const base64Str = btoa(unescape(encodeURIComponent(jsonStr)));
+            const baseUrl = window.location.href.split('?')[0];
+            const fullShareUrl = baseUrl + '?update=' + base64Str;
+            
+            // نسخ الرابط تلقائياً لحافظة الهاتف
+            navigator.clipboard.writeText(fullShareUrl).then(() => {
+                showAlert('📋 تم نسخ رابط التحديث بنجاح! أرسله الآن للموظفين عبر الواتساب بمجرد ضغطهم عليه سيتحدث هاتفهم فوراً.');
+            }).catch(() => {
+                // حل بديل في حال رفض المتصفح النسخ التلقائي
+                prompt('انسخ هذا الرابط وأرسله في الواتساب:', fullShareUrl);
+            });
+        } catch(err) {
+            alert('عذراً، حجم المنتجات كبير جداً على هذه الطريقة، يرجى إبلاغي.');
+        }
     }
     
     function switchCategory(catId) { 
@@ -230,7 +228,7 @@
         saveLocal(); 
         renderProducts(); 
         document.getElementById('add-product-form').reset(); 
-        showAlert('✅ تم الحفظ محلياً! اضغط على الزر الأزرق لتحديث السيرفر.');
+        showAlert('✅ تم حفظ المنتج بنجاح! اضغط الآن على الزر البنفسجي بالأعلى لتحديث باقي الهواتف إذا أردت.');
         switchAction('view'); 
     }
 
@@ -255,7 +253,7 @@
         saveLocal();
         renderProducts();
         document.getElementById('tab-edit-btn').style.display = 'none';
-        showAlert('⚙️ تم التعديل! اضغط على الزر الأزرق لتحديث السيرفر السحابي.');
+        showAlert('⚙️ تم التعديل! اضغط على الزر البنفسجي بالأعلى لإرسال التعديلات للواتساب.');
         switchAction('view');
     }
 
@@ -264,7 +262,7 @@
             db[currentCategory].splice(index, 1);
             saveLocal();
             renderProducts();
-            showAlert('🗑️ تم الحذف! اضغط على الزر الأزرق لتحديث السيرفر.');
+            showAlert('🗑️ تم الحذف بنجاح.');
         }
     }
     
@@ -273,9 +271,9 @@
         if(!box) return;
         box.innerText = msg; 
         box.style.display = 'block'; 
-        setTimeout(() => box.style.display = 'none', 4000); 
+        setTimeout(() => box.style.display = 'none', 6000); 
     }
-    window.onload = function() { downloadFromCloud(); };
+    window.onload = function() { renderProducts(); };
 </script>
 </body>
 </html>
