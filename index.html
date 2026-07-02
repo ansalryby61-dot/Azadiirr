@@ -10,11 +10,9 @@
             --secondary-color: #16a085;
             --accent-color: #e74c3c;
             --edit-color: #f39c12;
-            /* تم تحويل اللون البنفسجي المزعج إلى أزرق فاتح مريح وهادئ */
             --share-color: #4db6ac; 
             --bg-color: #f8f9fa;
             --text-color: #333;
-            /* لون أزرق سماوي ناعم جداً للخلفيات والأزرار */
             --light-blue-btn: #3498db;
             --light-blue-bg: #eaf2f8;
         }
@@ -23,19 +21,17 @@
         header { text-align: center; margin-bottom: 20px; border-bottom: 3px solid var(--secondary-color); padding-bottom: 10px; }
         header h1 { color: var(--primary-color); margin: 0; font-size: 26px; }
         
-        /* تعديل صندوق المشاركة ليصبح بخلفية زرقاء هادئة وحدود متصلة بدلاً من البنفسجي والمنقط */
-        .sync-box { background: var(--light-blue-bg); border: 2px solid #a9ccee; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
+        .sync-box { background: var(--light-blue-bg); border: 2px solid #a9ccee; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; display: none; }
         .sync-title { font-weight: bold; color: var(--primary-color); margin-bottom: 10px; font-size: 15px; }
         .sync-btn { width: 100%; padding: 14px; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; font-size: 15px; transition: 0.2s; }
         .sync-btn:active { transform: scale(0.98); }
         .btn-share { background-color: var(--light-blue-btn); box-shadow: 0 3px 6px rgba(52, 152, 219, 0.3); }
-        .btn-share:hover { background-color: #2980b9; }
         
         .main-categories { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin-bottom: 25px; }
         .cat-btn { padding: 12px 5px; border: 2px solid var(--primary-color); background: white; color: var(--primary-color); font-weight: bold; font-size: 14px; cursor: pointer; border-radius: 8px; text-align: center; }
         .cat-btn.active { background: var(--primary-color); color: white; }
         
-        .action-tabs { display: flex; background: #eee; border-radius: 6px; padding: 4px; margin-bottom: 20px; }
+        .action-tabs { display: none; background: #eee; border-radius: 6px; padding: 4px; margin-bottom: 20px; }
         .action-btn { flex: 1; padding: 10px; border: none; background: none; font-weight: bold; cursor: pointer; border-radius: 4px; }
         .action-btn.active { background: var(--secondary-color); color: white; }
         
@@ -51,6 +47,7 @@
         th { background-color: var(--primary-color); color: white; }
         tr:nth-child(even) { background-color: #f9f9f9; }
         
+        .admin-actions { display: none; }
         .action-cell { display: flex; gap: 5px; justify-content: flex-start; }
         .opt-btn { border: none; padding: 6px 10px; border-radius: 4px; color: white; font-weight: bold; cursor: pointer; font-size: 12px; }
         .btn-edit-item { background-color: var(--edit-color); }
@@ -58,14 +55,17 @@
         
         .alert { padding: 12px; background-color: #2ecc71; color: white; border-radius: 6px; margin-bottom: 15px; display: none; text-align: center; font-weight: bold; }
         .current-cat-title { color: var(--secondary-color); margin-top: 0; border-right: 4px solid var(--secondary-color); padding-right: 8px; }
+        
+        .admin-lock-zone { margin-top: 30px; text-align: center; padding-top: 15px; border-top: 1px solid #eee; }
+        .lock-link { color: #7f8c8d; font-size: 13px; text-decoration: none; cursor: pointer; font-weight: bold; }
+        .lock-link:hover { color: var(--accent-color); }
     </style>
 </head>
 <body>
 <div class="container">
     <header><h1>شركة أزادير</h1><p>منظومة مشاركة الأسعار الذكية والفورية</p></header>
     
-    <!-- الصندوق الجديد المحدث بالأزرق الهادئ الفاتح والمريح تماماً -->
-    <div class="sync-box">
+    <div class="sync-box" id="admin-sync-box">
         <div class="sync-title">📢 لتحديث هواتف الموظفين بالأسعار الجديدة فوراً:</div>
         <button class="sync-btn btn-share" onclick="generateShareLink()">🔗 1. إنشاء رابط التحديث الفوري ونسخه للواتساب</button>
     </div>
@@ -83,7 +83,8 @@
     </div>
     
     <h2 class="current-cat-title" id="category-title">القسم الحالي: 1. Pvc</h2>
-    <div class="action-tabs">
+    
+    <div class="action-tabs" id="admin-action-tabs">
         <button class="action-btn active" id="tab-view-btn" onclick="switchAction('view')">البحث وعرض الأسعار</button>
         <button class="action-btn" id="tab-add-btn" onclick="switchAction('add')">إضافة منتج جديد</button>
         <button class="action-btn" id="tab-edit-btn" style="display:none; background:var(--edit-color); color:white;" onclick="switchAction('edit')">تعديل المنتج الحالي</button>
@@ -94,7 +95,14 @@
         <input type="text" id="search-input" style="margin-bottom:15px; width:100%; padding:10px; box-sizing:border-box;" placeholder="ابحث باسم المنتج في هذا القسم..." oninput="renderProducts()">
         <div style="overflow-x:auto;">
             <table>
-                <thead><tr><th>اسم المنتج</th><th>سعر الجملة</th><th>سعر البيع</th><th>إجراءات</th></tr></thead>
+                <thead>
+                    <tr>
+                        <th>اسم المنتج</th>
+                        <th>سعر الجملة</th>
+                        <th>سعر البيع</th>
+                        <th class="admin-actions" id="th-actions">إجراءات المسؤول</th>
+                    </tr>
+                </thead>
                 <tbody id="products-table-body"></tbody>
             </table>
         </div>
@@ -120,9 +128,17 @@
             <button type="submit" class="btn" style="background-color: var(--edit-color);">تحديث وتعديل</button>
         </form>
     </div>
+
+    <div class="admin-lock-zone">
+        <span class="lock-link" id="admin-lock-btn" onclick="toggleAdminMode()">🔐 وضع المسؤول (تعديل وحذف)</span>
+    </div>
 </div>
 
 <script>
+    // 👥 هنا قائمة الأرقام السرية المسموح لها بالدخول كأدمن (رقمك ورقم شريكك)
+    const ADMIN_PASSWORDS = ["1234", "5678"]; 
+    let isAdmin = false;
+
     let db = { pvc: [], aluminium_ps: [], aluminium_hp: [], accessories_pvc: [], accessories_alum: [], handrail: [], gaskets: [], carton: [], sheets: [] };
     
     const urlParams = new URLSearchParams(window.location.search);
@@ -150,16 +166,44 @@
     
     function saveLocal() { localStorage.setItem('azadeer_link_db', JSON.stringify(db)); }
     
+    function toggleAdminMode() {
+        if (!isAdmin) {
+            let pass = prompt("الرجاء إدخال الرقم السري للمسؤول:");
+            // التحقق إذا كان الرقم المدخل موجوداً ضمن قائمة الأرقام المصرحة
+            if (ADMIN_PASSWORDS.includes(pass)) {
+                isAdmin = true;
+                document.getElementById('admin-lock-btn').innerText = "🔓 تسجيل خروج من وضع المسؤول";
+                document.getElementById('admin-sync-box').style.display = "block";
+                document.getElementById('admin-action-tabs').style.display = "flex";
+                document.getElementById('th-actions').style.display = "table-cell";
+                renderProducts();
+                showAlert("🔓 تم تفعيل صلاحيات المسؤول بنجاح!");
+            } else if (pass !== null) {
+                alert("❌ الرقم السري خاطئ! هذا الوضع مخصص للمسؤولين فقط.");
+            }
+        } else {
+            isAdmin = false;
+            document.getElementById('admin-lock-btn').innerText = "🔐 وضع المسؤول (تعديل وحذف)";
+            document.getElementById('admin-sync-box').style.display = "none";
+            document.getElementById('admin-action-tabs').style.display = "none";
+            document.getElementById('th-actions').style.display = "none";
+            switchAction('view');
+            renderProducts();
+            showAlert("🔒 تم تسجيل الخروج. العودة لوضع العرض الآمن للموظفين.");
+        }
+    }
+
     function generateShareLink() {
+        if(!isAdmin) return alert('صلاحية منتهية');
         try {
             const jsonStr = JSON.stringify(db);
             const base64Str = btoa(unescape(encodeURIComponent(jsonStr)));
             const baseUrl = window.location.href.split('?')[0];
             const fullShareUrl = baseUrl + '?update=' + base64Str;
             navigator.clipboard.writeText(fullShareUrl).then(() => {
-                showAlert('📋 تم نسخ رابط التحديث بنجاح! أرسله الآن للموظفين عبر الواتساب.');
+                showAlert('📋 تم نسخ رابط الموظفين الجديد بنجاح! أرسله لهم الآن عبر الواتساب.');
             }).catch(() => {
-                prompt('انسخ هذا الرابط وأرسله في الواتساب:', fullShareUrl);
+                prompt('انسخ هذا الرابط للموظفين:', fullShareUrl);
             });
         } catch(err) {
             alert('حجم المنتجات كبير جداً.');
@@ -189,24 +233,30 @@
         tbody.innerHTML = '';
         const searchTxt = document.getElementById('search-input').value.toLowerCase();
         const list = db[currentCategory] || [];
+        
         list.forEach((prod, index) => {
             if(prod && prod.name && prod.name.toLowerCase().includes(searchTxt)) {
+                let actionTd = isAdmin ? `<td class="admin-actions" style="display: table-cell;">
+                    <div class="action-cell">
+                        <button class="opt-btn btn-edit-item" onclick="setupEdit(${index})">تعديل</button>
+                        <button class="opt-btn btn-del-item" onclick="deleteProduct(${index})">حذف</button>
+                    </div>
+                </td>` : '';
+
                 tbody.innerHTML += `<tr>
                     <td><strong>${prod.name}</strong></td>
                     <td style="color:#2980b9; font-weight:bold;">${parseFloat(prod.wholesale).toFixed(2)} د.ل</td>
                     <td style="color:#27ae60; font-weight:bold;">${parseFloat(prod.retail).toFixed(2)} د.ل</td>
-                    <td><div class="action-cell">
-                        <button class="opt-btn btn-edit-item" onclick="setupEdit(${index})">تعديل</button>
-                        <button class="opt-btn btn-del-item" onclick="deleteProduct(${index})">حذف</button>
-                    </div></td>
+                    ${actionTd}
                 </tr>`;
             }
         });
     }
     
-    function addProduct(e) { e.preventDefault(); if(!db[currentCategory]) db[currentCategory] = []; db[currentCategory].push({ name: document.getElementById('prod-name').value, wholesale: document.getElementById('prod-wholesale').value, retail: document.getElementById('prod-retail').value }); saveLocal(); renderProducts(); document.getElementById('add-product-form').reset(); showAlert('✅ تم الحفظ! اضغط الزر الأزرق بالأعلى لإرسال التحديث.'); switchAction('view'); }
+    function addProduct(e) { e.preventDefault(); if(!isAdmin) return; if(!db[currentCategory]) db[currentCategory] = []; db[currentCategory].push({ name: document.getElementById('prod-name').value, wholesale: document.getElementById('prod-wholesale').value, retail: document.getElementById('prod-retail').value }); saveLocal(); renderProducts(); document.getElementById('add-product-form').reset(); showAlert('✅ تم حفظ المنتج! اضغط زر التحديث بالأعلى لنشره للموظفين.'); switchAction('view'); }
 
     function setupEdit(index) {
+        if(!isAdmin) return;
         const prod = db[currentCategory][index];
         document.getElementById('edit-index').value = index;
         document.getElementById('edit-prod-name').value = prod.name;
@@ -217,13 +267,13 @@
     }
 
     function updateProduct(e) {
-        e.preventDefault();
+        e.preventDefault(); if(!isAdmin) return;
         const index = document.getElementById('edit-index').value;
         db[currentCategory][index] = { name: document.getElementById('edit-prod-name').value, wholesale: document.getElementById('edit-prod-wholesale').value, retail: document.getElementById('edit-prod-retail').value };
-        saveLocal(); renderProducts(); document.getElementById('tab-edit-btn').style.display = 'none'; showAlert('⚙️ تم التعديل! اضغط الزر الأزرق بالأعلى لإرسال التعديلات.'); switchAction('view');
+        saveLocal(); renderProducts(); document.getElementById('tab-edit-btn').style.display = 'none'; showAlert('⚙️ تم التعديل! يرجى إنشاء رابط التحديث لإرساله.'); switchAction('view');
     }
 
-    function deleteProduct(index) { if(confirm("هل أنت متأكد من الحذف؟")) { db[currentCategory].splice(index, 1); saveLocal(); renderProducts(); showAlert('🗑️ تم الحذف بنجاح.'); } }
+    function deleteProduct(index) { if(!isAdmin) return; if(confirm("هل أنت متأكد من الحذف؟")) { db[currentCategory].splice(index, 1); saveLocal(); renderProducts(); showAlert('🗑️ تم الحذف بنجاح.'); } }
     
     function showAlert(msg) { const box = document.getElementById('alert-msg'); if(!box) return; box.innerText = msg; box.style.display = 'block'; setTimeout(() => box.style.display = 'none', 6000); }
     window.onload = function() { renderProducts(); };
