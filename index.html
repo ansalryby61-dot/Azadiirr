@@ -10,7 +10,8 @@
             --secondary-color: #16a085;
             --accent-color: #e74c3c;
             --edit-color: #f39c12;
-            --share-color: #8e44ad;
+            /* تم تغيير اللون إلى أزرق سماوي خفيف */
+            --share-color: #3498db; 
             --bg-color: #f8f9fa;
             --text-color: #333;
         }
@@ -19,7 +20,8 @@
         header { text-align: center; margin-bottom: 20px; border-bottom: 3px solid var(--secondary-color); padding-bottom: 10px; }
         header h1 { color: var(--primary-color); margin: 0; font-size: 26px; }
         
-        .sync-box { background: #f4ecf7; border: 2px dashed var(--share-color); padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
+        /* تحديث لون صندوق المشاركة ليتناسب مع الأزرق الجديد */
+        .sync-box { background: #ebf5fb; border: 2px dashed var(--share-color); padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
         .sync-title { font-weight: bold; color: var(--share-color); margin-bottom: 10px; font-size: 15px; }
         .sync-btn { width: 100%; padding: 14px; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; font-size: 15px; transition: 0.2s; }
         .sync-btn:active { transform: scale(0.98); }
@@ -118,18 +120,15 @@
 <script>
     let db = { pvc: [], aluminium_ps: [], aluminium_hp: [], accessories_pvc: [], accessories_alum: [], handrail: [], gaskets: [], carton: [], sheets: [] };
     
-    // 1. فحص أولاً إذا فتح الموظف الرابط المشترك الذي يحتوي البيانات
     const urlParams = new URLSearchParams(window.location.search);
     const sharedData = urlParams.get('update');
     
     if(sharedData) {
         try {
-            // فك التشفير واستخراج البيانات المحدثة
             const decodedData = JSON.parse(decodeURIComponent(escape(atob(sharedData))));
             if(decodedData && decodedData.pvc) {
                 db = decodedData;
                 localStorage.setItem('azadeer_link_db', JSON.stringify(db));
-                // تنظيف الرابط لكي لا تتكرر العملية عند إعادة تحديث الصفحة
                 window.history.replaceState({}, document.title, window.location.pathname);
                 alert('✅ مبروك! تم سحب وتحديث كامل قوائم الأسعار الجديدة بنجاح التام!');
             }
@@ -137,7 +136,6 @@
             alert('حدث خطأ أثناء قراءة رابط التحديث الجاري.');
         }
     } else {
-        // إذا فتح التطبيق عادي يقرأ من الذاكرة المحلية للهاتف
         let localData = localStorage.getItem('azadeer_link_db');
         if(localData) { try { db = JSON.parse(localData); } catch(e){} }
     }
@@ -145,28 +143,21 @@
     let currentCategory = 'pvc';
     const catNamesAr = { pvc: '1. Pvc', aluminium_ps: '2. ألومنيوم PS', aluminium_hp: '3. ألومنيوم HP', accessories_pvc: '4. اكسسوار PVC', accessories_alum: '5. اكسسوار ألومنيوم', handrail: '6. درابزين', gaskets: '7. قومات', carton: '8. كارتن', sheets: '9. الواح' };
     
-    function saveLocal() { 
-        localStorage.setItem('azadeer_link_db', JSON.stringify(db)); 
-    }
+    function saveLocal() { localStorage.setItem('azadeer_link_db', JSON.stringify(db)); }
     
-    // 🔗 إنشاء الرابط السحابي الذكي الفوري بضغطة زر
     function generateShareLink() {
         try {
-            // تحويل البضاعة إلى كود مشفر مدمج داخل الرابط نفسه
             const jsonStr = JSON.stringify(db);
             const base64Str = btoa(unescape(encodeURIComponent(jsonStr)));
             const baseUrl = window.location.href.split('?')[0];
             const fullShareUrl = baseUrl + '?update=' + base64Str;
-            
-            // نسخ الرابط تلقائياً لحافظة الهاتف
             navigator.clipboard.writeText(fullShareUrl).then(() => {
-                showAlert('📋 تم نسخ رابط التحديث بنجاح! أرسله الآن للموظفين عبر الواتساب بمجرد ضغطهم عليه سيتحدث هاتفهم فوراً.');
+                showAlert('📋 تم نسخ رابط التحديث بنجاح! أرسله الآن للموظفين عبر الواتساب.');
             }).catch(() => {
-                // حل بديل في حال رفض المتصفح النسخ التلقائي
                 prompt('انسخ هذا الرابط وأرسله في الواتساب:', fullShareUrl);
             });
         } catch(err) {
-            alert('عذراً، حجم المنتجات كبير جداً على هذه الطريقة، يرجى إبلاغي.');
+            alert('حجم المنتجات كبير جداً.');
         }
     }
     
@@ -182,16 +173,9 @@
     
     function switchAction(type) { 
         document.querySelectorAll('.action-btn, .view-section, .form-section').forEach(el => el.classList.remove('active')); 
-        if(type==='view'){ 
-            document.getElementById('tab-view-btn').classList.add('active'); 
-            document.getElementById('view-section').classList.add('active'); 
-        } else if(type==='add'){ 
-            document.getElementById('tab-add-btn').classList.add('active'); 
-            document.getElementById('add-section').classList.add('active'); 
-        } else if(type==='edit'){
-            document.getElementById('tab-edit-btn').classList.add('active'); 
-            document.getElementById('edit-section').classList.add('active'); 
-        }
+        if(type==='view'){ document.getElementById('tab-view-btn').classList.add('active'); document.getElementById('view-section').classList.add('active'); } 
+        else if(type==='add'){ document.getElementById('tab-add-btn').classList.add('active'); document.getElementById('add-section').classList.add('active'); } 
+        else if(type==='edit'){ document.getElementById('tab-edit-btn').classList.add('active'); document.getElementById('edit-section').classList.add('active'); }
     }
     
     function renderProducts() {
@@ -206,31 +190,16 @@
                     <td><strong>${prod.name}</strong></td>
                     <td style="color:#2980b9; font-weight:bold;">${parseFloat(prod.wholesale).toFixed(2)} د.ل</td>
                     <td style="color:#27ae60; font-weight:bold;">${parseFloat(prod.retail).toFixed(2)} د.ل</td>
-                    <td>
-                        <div class="action-cell">
-                            <button class="opt-btn btn-edit-item" onclick="setupEdit(${index})">تعديل</button>
-                            <button class="opt-btn btn-del-item" onclick="deleteProduct(${index})">حذف</button>
-                        </div>
-                    </td>
+                    <td><div class="action-cell">
+                        <button class="opt-btn btn-edit-item" onclick="setupEdit(${index})">تعديل</button>
+                        <button class="opt-btn btn-del-item" onclick="deleteProduct(${index})">حذف</button>
+                    </div></td>
                 </tr>`;
             }
         });
     }
     
-    function addProduct(e) { 
-        e.preventDefault(); 
-        if(!db[currentCategory]) db[currentCategory] = [];
-        db[currentCategory].push({ 
-            name: document.getElementById('prod-name').value, 
-            wholesale: document.getElementById('prod-wholesale').value, 
-            retail: document.getElementById('prod-retail').value 
-        }); 
-        saveLocal(); 
-        renderProducts(); 
-        document.getElementById('add-product-form').reset(); 
-        showAlert('✅ تم حفظ المنتج بنجاح! اضغط الآن على الزر البنفسجي بالأعلى لتحديث باقي الهواتف إذا أردت.');
-        switchAction('view'); 
-    }
+    function addProduct(e) { e.preventDefault(); if(!db[currentCategory]) db[currentCategory] = []; db[currentCategory].push({ name: document.getElementById('prod-name').value, wholesale: document.getElementById('prod-wholesale').value, retail: document.getElementById('prod-retail').value }); saveLocal(); renderProducts(); document.getElementById('add-product-form').reset(); showAlert('✅ تم الحفظ! اضغط الزر الأزرق بالأعلى لإرسال التحديث.'); switchAction('view'); }
 
     function setupEdit(index) {
         const prod = db[currentCategory][index];
@@ -245,34 +214,13 @@
     function updateProduct(e) {
         e.preventDefault();
         const index = document.getElementById('edit-index').value;
-        db[currentCategory][index] = {
-            name: document.getElementById('edit-prod-name').value,
-            wholesale: document.getElementById('edit-prod-wholesale').value,
-            retail: document.getElementById('edit-prod-retail').value
-        };
-        saveLocal();
-        renderProducts();
-        document.getElementById('tab-edit-btn').style.display = 'none';
-        showAlert('⚙️ تم التعديل! اضغط على الزر البنفسجي بالأعلى لإرسال التعديلات للواتساب.');
-        switchAction('view');
+        db[currentCategory][index] = { name: document.getElementById('edit-prod-name').value, wholesale: document.getElementById('edit-prod-wholesale').value, retail: document.getElementById('edit-prod-retail').value };
+        saveLocal(); renderProducts(); document.getElementById('tab-edit-btn').style.display = 'none'; showAlert('⚙️ تم التعديل! اضغط الزر الأزرق بالأعلى لإرسال التعديلات.'); switchAction('view');
     }
 
-    function deleteProduct(index) {
-        if(confirm("هل أنت متأكد من حذف هذا المنتج؟")) {
-            db[currentCategory].splice(index, 1);
-            saveLocal();
-            renderProducts();
-            showAlert('🗑️ تم الحذف بنجاح.');
-        }
-    }
+    function deleteProduct(index) { if(confirm("هل أنت متأكد من الحذف؟")) { db[currentCategory].splice(index, 1); saveLocal(); renderProducts(); showAlert('🗑️ تم الحذف بنجاح.'); } }
     
-    function showAlert(msg) { 
-        const box = document.getElementById('alert-msg'); 
-        if(!box) return;
-        box.innerText = msg; 
-        box.style.display = 'block'; 
-        setTimeout(() => box.style.display = 'none', 6000); 
-    }
+    function showAlert(msg) { const box = document.getElementById('alert-msg'); if(!box) return; box.innerText = msg; box.style.display = 'block'; setTimeout(() => box.style.display = 'none', 6000); }
     window.onload = function() { renderProducts(); };
 </script>
 </body>
