@@ -18,8 +18,12 @@
         }
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 15px; }
         .container { max-width: 1000px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        header { text-align: center; margin-bottom: 20px; border-bottom: 3px solid var(--secondary-color); padding-bottom: 10px; }
-        header h1 { color: var(--primary-color); margin: 0; font-size: 26px; }
+        
+        /* تنسيق الهيدر والشعار المطور من صورة 1000283088.jpg */
+        header { text-align: center; margin-bottom: 20px; border-bottom: 3px solid var(--secondary-color); padding-bottom: 15px; }
+        .header-title-wrap { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
+        header h1 { color: var(--primary-color); margin: 0; font-size: 28px; display: flex; align-items: center; gap: 12px; }
+        .logo-svg { width: 65px; height: auto; }
         
         .sync-box { background: var(--light-blue-bg); border: 2px solid #a9ccee; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; display: none; }
         .sync-title { font-weight: bold; color: var(--primary-color); margin-bottom: 10px; font-size: 15px; }
@@ -63,14 +67,41 @@
 </head>
 <body>
 <div class="container">
-    <header><h1>شركة أزادير</h1><p>منظومة مشاركة الأسعار الذكية والفورية</p></header>
+    <header>
+        <div class="header-title-wrap">
+            <h1>
+                شركة أزادير
+                <!-- 🎨 رسمة الشعار المستوحاة من 1000283088.jpg مع تحويل الرقم إلى 1 ووضعه على اليسار -->
+                <svg class="logo-svg" viewBox="0 0 360 220" xmlns="http://www.w3.org/2000/svg">
+                    <!-- الدائرة الزرقاء وبداخلها رقم 1 بنفس درجة اللون -->
+                    <circle cx="85" cy="100" r="62" fill="#20337a" />
+                    <circle cx="85" cy="100" r="56" fill="none" stroke="#ffffff" stroke-width="2.5" />
+                    <text x="85" y="126" font-family="'Segoe UI', Arial, sans-serif" font-size="82" font-weight="900" fill="#ffffff" text-anchor="middle">1</text>
+                    
+                    <!-- المبنى الأزرق الطولي -->
+                    <polygon points="165,45 215,15 215,185 165,170" fill="#20337a" />
+                    <!-- مربعات النوافذ الأربعة -->
+                    <rect x="175" y="72" width="12" height="12" fill="#ffffff"/>
+                    <rect x="193" y="72" width="12" height="12" fill="#ffffff"/>
+                    <rect x="175" y="90" width="12" height="12" fill="#ffffff"/>
+                    <rect x="193" y="90" width="12" height="12" fill="#ffffff"/>
+                    
+                    <!-- الجزء الأسود المنحني (حرف D) -->
+                    <path d="M 220,15 C 265,15 320,45 320,100 C 320,155 265,185 220,185 L 220,150 C 255,150 282,130 282,100 C 282,70 255,50 220,50 Z" fill="#000000" />
+                    
+                    <!-- القوس السفلي الممتد -->
+                    <path d="M 105,165 Q 185,215 310,185 Q 185,235 105,165" fill="#000000" />
+                </svg>
+            </h1>
+        </div>
+        <p>منظومة مشاركة الأسعار الذكية والفورية</p>
+    </header>
     
     <div class="sync-box" id="admin-sync-box">
         <div class="sync-title">📢 لتحديث هواتف الموظفين بالأسعار الجديدة فوراً:</div>
         <button class="sync-btn btn-share" onclick="generateShareLink()">🔗 1. إنشاء رابط التحديث الفوري ونسخه للواتساب</button>
     </div>
 
-    <!-- تم إضافة الزر العاشر هنا -->
     <div class="main-categories">
         <button class="cat-btn active" id="btn-pvc" onclick="switchCategory('pvc')">1. Pvc</button>
         <button class="cat-btn" id="btn-aluminium_ps" onclick="switchCategory('aluminium_ps')">2. ألومنيوم PS</button>
@@ -140,7 +171,6 @@
     const ADMIN_PASSWORD = "2020"; 
     let isAdmin = false;
 
-    // تم إضافة قاعدة البيانات الخاصة بقسم المعدات الجديد هنا
     let db = { pvc: [], aluminium_ps: [], aluminium_hp: [], accessories_pvc: [], accessories_alum: [], handrail: [], gaskets: [], carton: [], sheets: [], equipment: [] };
     
     const urlParams = new URLSearchParams(window.location.search);
@@ -150,7 +180,6 @@
         try {
             const decodedData = JSON.parse(decodeURIComponent(escape(atob(sharedData))));
             if(decodedData && decodedData.pvc) {
-                // دمج البيانات والتأكد من دعم الهياكل القديمة لقسم المعدات
                 db = { ...db, ...decodedData };
                 localStorage.setItem('azadeer_link_db', JSON.stringify(db));
                 window.history.replaceState({}, document.title, window.location.pathname);
@@ -164,7 +193,7 @@
         if(localData) { 
             try { 
                 let parsed = JSON.parse(localData); 
-                db = { ...db, ...parsed }; // الحفاظ على قسم المعدات حتى لو لم يكن مخزناً سابقاً
+                db = { ...db, ...parsed };
             } catch(e){} 
         }
     }
