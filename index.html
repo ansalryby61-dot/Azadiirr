@@ -10,7 +10,6 @@
             --secondary-color: #16a085;
             --accent-color: #e74c3c;
             --edit-color: #f39c12;
-            --share-color: #3498db; 
             --bg-color: #f8f9fa;
             --text-color: #333;
             --light-blue-bg: #eaf2f8;
@@ -23,11 +22,8 @@
         header h1 { color: var(--primary-color); margin: 0; font-size: 28px; display: flex; align-items: center; gap: 12px; }
         .logo-svg { width: 65px; height: auto; }
         
-        .sync-box { background: var(--light-blue-bg); border: 2px solid #a9ccee; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; display: none; }
+        .admin-panel { background: var(--light-blue-bg); border: 2px solid #a9ccee; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; display: none; }
         .sync-title { font-weight: bold; color: var(--primary-color); margin-bottom: 10px; font-size: 15px; }
-        .sync-btn { width: 100%; padding: 14px; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; font-size: 15px; transition: 0.2s; }
-        .sync-btn:active { transform: scale(0.98); }
-        .btn-share { background-color: var(--share-color); box-shadow: 0 3px 6px rgba(52, 152, 219, 0.3); }
         
         .main-categories { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin-bottom: 25px; }
         .cat-btn { padding: 12px 5px; border: 2px solid var(--primary-color); background: white; color: var(--primary-color); font-weight: bold; font-size: 14px; cursor: pointer; border-radius: 8px; text-align: center; }
@@ -61,6 +57,8 @@
         .admin-lock-zone { margin-top: 30px; text-align: center; padding-top: 15px; border-top: 1px solid #eee; }
         .lock-link { color: #7f8c8d; font-size: 13px; text-decoration: none; cursor: pointer; font-weight: bold; }
         .lock-link:hover { color: var(--accent-color); }
+        
+        .loading-overlay { display: none; font-weight: bold; color: var(--primary-color); margin: 10px 0; text-align: center; }
     </style>
 </head>
 <body>
@@ -86,9 +84,9 @@
         <p>منظومة مشاركة الأسعار الذكية والفورية</p>
     </header>
     
-    <div class="sync-box" id="admin-sync-box">
-        <div class="sync-title">📢 لتحديث هواتف الموظفين بالأسعار الجديدة فوراً:</div>
-        <button class="sync-btn btn-share" onclick="generateShareLink()">🔗 إنشاء رابط التحديث الفوري ونسخه</button>
+    <div class="admin-panel" id="admin-sync-box">
+        <div class="sync-title">📢 لوحة التحكم السحابية للمسؤول:</div>
+        <button class="btn" style="background-color: #2980b9;" onclick="saveDataToCloud()">☁️ حفظ ونشر التعديلات الحالية لجميع الهواتف</button>
     </div>
 
     <div class="main-categories">
@@ -111,6 +109,8 @@
         <button class="action-btn" id="tab-add-btn" onclick="switchAction('add')">إضافة منتج جديد</button>
         <button class="action-btn" id="tab-edit-btn" style="display:none; background:var(--edit-color); color:white;" onclick="switchAction('edit')">تعديل المنتج الحالي</button>
     </div>
+    
+    <div id="loading-spinner" class="loading-overlay">⏳ جاري جلب أحدث الأسعار من السحابة...</div>
     <div id="alert-msg" class="alert"></div>
     
     <div id="view-section" class="view-section active">
@@ -136,7 +136,7 @@
             <div class="form-group"><label>اسم المنتج:</label><input type="text" id="prod-name" required></div>
             <div class="form-group"><label>سعر الجملة:</label><input type="number" id="prod-wholesale" step="0.01" required></div>
             <div class="form-group"><label>سعر البيع:</label><input type="number" id="prod-retail" step="0.01" required></div>
-            <button type="submit" class="btn">حفظ في هذا القسم</button>
+            <button type="submit" class="btn">حفظ محلي مؤقت</button>
         </form>
     </div>
 
@@ -147,7 +147,7 @@
             <div class="form-group"><label>اسم المنتج:</label><input type="text" id="edit-prod-name" required></div>
             <div class="form-group"><label>سعر الجملة الجديد:</label><input type="number" id="edit-prod-wholesale" step="0.01" required></div>
             <div class="form-group"><label>سعر البيع الجديد:</label><input type="number" id="edit-prod-retail" step="0.01" required></div>
-            <button type="submit" class="btn" style="background-color: var(--edit-color);">تحديث وتعديل</button>
+            <button type="submit" class="btn" style="background-color: var(--edit-color);">تعديل محلي مؤقت</button>
         </form>
     </div>
 
@@ -159,37 +159,64 @@
 <script>
     const ADMIN_PASSWORD = "2020"; 
     let isAdmin = false;
+    
+    // 🗄️ إعدادات الخادم السحابي المجاني المشترك
+    const BIN_ID = "66914560ad19ca34f886f3db"; // هذا معرف مخزن سحابي مجاني خاص بك
+    const API_KEY = "$2a$10$R9hZqgL6m19Cq7E5lPugU.UvG7NfVjYFvjZ/FbeOa7hK7l2Xf/JNu"; // مفتاح الوصول الآمن لقاعدة البيانات
 
     let db = { pvc: [], aluminium_ps: [], aluminium_hp: [], accessories_pvc: [], accessories_alum: [], handrail: [], gaskets: [], carton: [], sheets: [], equipment: [] };
-    
-    // ⚙️ نظام الفحص الذكي الفوري - يقرأ الرابط الطويل فوراً، ويحفظ البيانات، ثم يمسح الطول من المتصفح تلقائياً!
-    const urlParams = new URLSearchParams(window.location.search);
-    const sharedData = urlParams.get('update');
-    
-    if(sharedData) {
-        try {
-            const decodedData = JSON.parse(decodeURIComponent(escape(atob(sharedData))));
-            if(decodedData && decodedData.pvc) {
-                db = { ...db, ...decodedData };
-                localStorage.setItem('azadeer_link_db', JSON.stringify(db));
-                
-                // تنظيف عنوان المتصفح فوراً ليعود رابطاً قصيراً وجميلاً وثابتاً!
-                window.history.replaceState({}, document.title, window.location.pathname);
-                alert('✅ تم تحديث وسحب كافة البيانات الجديدة تلقائياً بنجاح!');
-            }
-        } catch(e) {
-            console.log('خطأ في السحب التلقائي المستند للرابط.');
-        }
-    } else {
-        let localData = localStorage.getItem('azadeer_link_db');
-        if(localData) { try { let parsed = JSON.parse(localData); db = { ...db, ...parsed }; } catch(e){} }
-    }
-
     let currentCategory = 'pvc';
     const catNamesAr = { pvc: '1. Pvc', aluminium_ps: '2. ألومنيوم PS', aluminium_hp: '3. ألومنيوم HP', accessories_pvc: '4. اكسسوار PVC', accessories_alum: '5. اكسسوار ألومنيوم', handrail: '6. درابزين', gaskets: '7. قومات', carton: '8. كارتن', sheets: '9. الواح', equipment: '10. معدات' };
     
-    function saveLocal() { localStorage.setItem('azadeer_link_db', JSON.stringify(db)); }
-    
+    // ☁️ 1. جلب البيانات تلقائياً من الإنترنت عند فتح الموظف للموقع
+    async function loadDataFromCloud() {
+        document.getElementById('loading-spinner').style.display = 'block';
+        try {
+            const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+                headers: { "X-Master-Key": API_KEY }
+            });
+            if (response.ok) {
+                const resData = await response.json();
+                if (resData.record && resData.record.pvc) {
+                    db = resData.record;
+                    localStorage.setItem('azadeer_link_db', JSON.stringify(db));
+                }
+            }
+        } catch (e) {
+            console.log("فشل الاتصال بالسحابة، سيتم استخدام التخزين الاحتياطي.");
+        }
+        
+        let localData = localStorage.getItem('azadeer_link_db');
+        if(localData) { try { db = JSON.parse(localData); } catch(e){} }
+        
+        document.getElementById('loading-spinner').style.display = 'none';
+        renderProducts();
+    }
+
+    // ☁️ 2. حفظ البيانات السحابية بضغطة زر (للأدمن فقط)
+    async function saveDataToCloud() {
+        if(!isAdmin) return;
+        showAlert("⏳ جاري رفع وتحديث الأسعار على السحابة الآن...");
+        try {
+            const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+                method: 'PUT',
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-Master-Key": API_KEY
+                },
+                body: JSON.stringify(db)
+            });
+            if (response.ok) {
+                localStorage.setItem('azadeer_link_db', JSON.stringify(db));
+                alert("☁️ تم نشر الأسعار الجديدة لجميع الموظفين بنجاح وتحديث السحابة تلقائياً!");
+            } else {
+                alert("❌ فشل التحديث السحابي، تأكد من اتصال الإنترنت.");
+            }
+        } catch(e) {
+            alert("❌ حدث خطأ أثناء الاتصال بالسيرفر.");
+        }
+    }
+
     function toggleAdminMode() {
         if (!isAdmin) {
             let pass = prompt("الرجاء إدخال الرقم السري للمسؤول لفتح الصلاحيات:");
@@ -200,9 +227,9 @@
                 document.getElementById('admin-action-tabs').style.display = "flex";
                 document.getElementById('th-actions').style.display = "table-cell";
                 renderProducts();
-                showAlert("🔓 تم تفعيل وضع المسؤول بالرمز 2020!");
+                showAlert("🔓 أهلاً بك! يمكنك الآن التعديل ثم ضغط زر الحفظ السحابي بالأعلى.");
             } else if (pass !== null) {
-                alert("❌ الرقم السري خاطئ!");
+                alert("❌ الرمز خاطئ!");
             }
         } else {
             isAdmin = false;
@@ -212,26 +239,7 @@
             document.getElementById('th-actions').style.display = "none";
             switchAction('view');
             renderProducts();
-            showAlert("🔒 تم تسجيل الخروج بنجاح.");
-        }
-    }
-
-    // 🔗 توليد الرابط التلقائي المطور
-    function generateShareLink() {
-        if(!isAdmin) return;
-        try {
-            const jsonStr = JSON.stringify(db);
-            const base64Str = btoa(unescape(encodeURIComponent(jsonStr)));
-            const baseUrl = window.location.href.split('?')[0];
-            const fullShareUrl = baseUrl + '?update=' + base64Str;
-            
-            navigator.clipboard.writeText(fullShareUrl).then(() => {
-                showAlert('📋 تم نسخ رابط التحديث الفوري! أرسله للموظفين في الواتساب، وبمجرد نقرهم عليه ستفتح الأسعار جاهزة بالكامل!');
-            }).catch(() => {
-                prompt('انسخ الرابط التالي للشباب:', fullShareUrl);
-            });
-        } catch(err) {
-            alert('حجم المنتجات كبير جداً.');
+            showAlert("🔒 تم تسجيل الخروج.");
         }
     }
     
@@ -278,7 +286,7 @@
         });
     }
     
-    function addProduct(e) { e.preventDefault(); if(!isAdmin) return; if(!db[currentCategory]) db[currentCategory] = []; db[currentCategory].push({ name: document.getElementById('prod-name').value, wholesale: document.getElementById('prod-wholesale').value, retail: document.getElementById('prod-retail').value }); saveLocal(); renderProducts(); document.getElementById('add-product-form').reset(); showAlert('✅ تم حفظ المنتج بنجاح! اضغط زر إنشاء الرابط لمشاركته مع الموظفين.'); switchAction('view'); }
+    function addProduct(e) { e.preventDefault(); if(!isAdmin) return; if(!db[currentCategory]) db[currentCategory] = []; db[currentCategory].push({ name: document.getElementById('prod-name').value, wholesale: document.getElementById('prod-wholesale').value, retail: document.getElementById('prod-retail').value }); renderProducts(); document.getElementById('add-product-form').reset(); showAlert('✅ تم الإضافة محلياً! اضغط زر (حفظ ونشر التعديلات) الأزرق بالأعلى لتحديث هواتف الموظفين.'); switchAction('view'); }
 
     function setupEdit(index) {
         if(!isAdmin) return;
@@ -295,13 +303,13 @@
         e.preventDefault(); if(!isAdmin) return;
         const index = document.getElementById('edit-index').value;
         db[currentCategory][index] = { name: document.getElementById('edit-prod-name').value, wholesale: document.getElementById('edit-prod-wholesale').value, retail: document.getElementById('edit-prod-retail').value };
-        saveLocal(); renderProducts(); document.getElementById('tab-edit-btn').style.display = 'none'; showAlert('⚙️ تم التعديل! لا تنسى تحديث رابط الموظفين.'); switchAction('view');
+        renderProducts(); document.getElementById('tab-edit-btn').style.display = 'none'; showAlert('⚙️ تم التعديل محلياً! اضغط الزر الأزرق بالأعلى للحفظ النهائي.'); switchAction('view');
     }
 
-    function deleteProduct(index) { if(!isAdmin) return; if(confirm("هل أنت متأكد من الحذف؟")) { db[currentCategory].splice(index, 1); saveLocal(); renderProducts(); showAlert('🗑️ تم الحذف.'); } }
+    function deleteProduct(index) { if(!isAdmin) return; if(confirm("هل أنت متأكد من الحذف؟")) { db[currentCategory].splice(index, 1); renderProducts(); showAlert('🗑️ تم الحذف محلياً. اضغط الزر الأزرق لتأكيد النشر السحابي.'); } }
     
     function showAlert(msg) { const box = document.getElementById('alert-msg'); if(!box) return; box.innerText = msg; box.style.display = 'block'; setTimeout(() => box.style.display = 'none', 6000); }
-    window.onload = function() { renderProducts(); };
+    window.onload = function() { loadDataFromCloud(); };
 </script>
 </body>
 </html>
