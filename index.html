@@ -23,12 +23,11 @@
         header h1 { color: var(--primary-color); margin: 0; font-size: 28px; display: flex; align-items: center; gap: 12px; }
         .logo-svg { width: 65px; height: auto; }
         
-        .sync-box { background: var(--light-blue-bg); border: 2px solid #a9ccee; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
+        .sync-box { background: var(--light-blue-bg); border: 2px solid #a9ccee; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; display: none; }
         .sync-title { font-weight: bold; color: var(--primary-color); margin-bottom: 10px; font-size: 15px; }
-        .sync-btn { width: 100%; padding: 12px; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; font-size: 15px; transition: 0.2s; margin-top: 5px; }
+        .sync-btn { width: 100%; padding: 14px; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; font-size: 15px; transition: 0.2s; }
         .sync-btn:active { transform: scale(0.98); }
-        .btn-share { background-color: var(--share-color); }
-        .btn-import { background-color: var(--secondary-color); }
+        .btn-share { background-color: var(--share-color); box-shadow: 0 3px 6px rgba(52, 152, 219, 0.3); }
         
         .main-categories { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin-bottom: 25px; }
         .cat-btn { padding: 12px 5px; border: 2px solid var(--primary-color); background: white; color: var(--primary-color); font-weight: bold; font-size: 14px; cursor: pointer; border-radius: 8px; text-align: center; }
@@ -42,7 +41,7 @@
         .view-section.active, .form-section.active { display: block; }
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; font-weight: 600; }
-        input[type="text"], input[type="number"], textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 15px; }
+        input[type="text"], input[type="number"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 15px; }
         button.btn { background-color: var(--secondary-color); color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; }
         
         table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
@@ -87,17 +86,9 @@
         <p>منظومة مشاركة الأسعار الذكية والفورية</p>
     </header>
     
-    <!-- 🔄 الصندوق المطور للتحديثات السهلة -->
-    <div class="sync-box">
-        <div id="admin-export-zone" style="display: none;">
-            <div class="sync-title">📢 أنشئ كود التحديث لترسله للموظفين:</div>
-            <button class="sync-btn btn-share" onclick="exportDataCode()">📋 إنشاء كود الأسعار الجديد ونسخه</button>
-        </div>
-        <div style="margin-top: 10px;">
-            <div class="sync-title">📥 تحديث الأسعار (للموظفين والمسؤولين):</div>
-            <textarea id="import-code-input" rows="2" placeholder="الصق كود الأسعار الذي وصلك في الواتساب هنا..."></textarea>
-            <button class="sync-btn btn-import" onclick="importDataCode()">🔄 تحديث القوائم فوراً</button>
-        </div>
+    <div class="sync-box" id="admin-sync-box">
+        <div class="sync-title">📢 لتحديث هواتف الموظفين بالأسعار الجديدة فوراً:</div>
+        <button class="sync-btn btn-share" onclick="generateShareLink()">🔗 إنشاء رابط التحديث الفوري ونسخه</button>
     </div>
 
     <div class="main-categories">
@@ -171,9 +162,28 @@
 
     let db = { pvc: [], aluminium_ps: [], aluminium_hp: [], accessories_pvc: [], accessories_alum: [], handrail: [], gaskets: [], carton: [], sheets: [], equipment: [] };
     
-    // تحميل البيانات المحفوظة محلياً
-    let localData = localStorage.getItem('azadeer_link_db');
-    if(localData) { try { let parsed = JSON.parse(localData); db = { ...db, ...parsed }; } catch(e){} }
+    // ⚙️ نظام الفحص الذكي الفوري - يقرأ الرابط الطويل فوراً، ويحفظ البيانات، ثم يمسح الطول من المتصفح تلقائياً!
+    const urlParams = new URLSearchParams(window.location.search);
+    const sharedData = urlParams.get('update');
+    
+    if(sharedData) {
+        try {
+            const decodedData = JSON.parse(decodeURIComponent(escape(atob(sharedData))));
+            if(decodedData && decodedData.pvc) {
+                db = { ...db, ...decodedData };
+                localStorage.setItem('azadeer_link_db', JSON.stringify(db));
+                
+                // تنظيف عنوان المتصفح فوراً ليعود رابطاً قصيراً وجميلاً وثابتاً!
+                window.history.replaceState({}, document.title, window.location.pathname);
+                alert('✅ تم تحديث وسحب كافة البيانات الجديدة تلقائياً بنجاح!');
+            }
+        } catch(e) {
+            console.log('خطأ في السحب التلقائي المستند للرابط.');
+        }
+    } else {
+        let localData = localStorage.getItem('azadeer_link_db');
+        if(localData) { try { let parsed = JSON.parse(localData); db = { ...db, ...parsed }; } catch(e){} }
+    }
 
     let currentCategory = 'pvc';
     const catNamesAr = { pvc: '1. Pvc', aluminium_ps: '2. ألومنيوم PS', aluminium_hp: '3. ألومنيوم HP', accessories_pvc: '4. اكسسوار PVC', accessories_alum: '5. اكسسوار ألومنيوم', handrail: '6. درابزين', gaskets: '7. قومات', carton: '8. كارتن', sheets: '9. الواح', equipment: '10. معدات' };
@@ -186,18 +196,18 @@
             if (pass === ADMIN_PASSWORD) {
                 isAdmin = true;
                 document.getElementById('admin-lock-btn').innerText = "🔓 تسجيل خروج من وضع المسؤول";
-                document.getElementById('admin-export-zone').style.display = "block";
+                document.getElementById('admin-sync-box').style.display = "block";
                 document.getElementById('admin-action-tabs').style.display = "flex";
                 document.getElementById('th-actions').style.display = "table-cell";
                 renderProducts();
-                showAlert("🔓 مرحباً بك! تم تفعيل صلاحيات الأدمن.");
+                showAlert("🔓 تم تفعيل وضع المسؤول بالرمز 2020!");
             } else if (pass !== null) {
                 alert("❌ الرقم السري خاطئ!");
             }
         } else {
             isAdmin = false;
             document.getElementById('admin-lock-btn').innerText = "🔐 وضع المسؤول (تعديل وحذف)";
-            document.getElementById('admin-export-zone').style.display = "none";
+            document.getElementById('admin-sync-box').style.display = "none";
             document.getElementById('admin-action-tabs').style.display = "none";
             document.getElementById('th-actions').style.display = "none";
             switchAction('view');
@@ -206,39 +216,22 @@
         }
     }
 
-    // 📋 تصدير كود نصي صغير وسهل جداً
-    function exportDataCode() {
+    // 🔗 توليد الرابط التلقائي المطور
+    function generateShareLink() {
         if(!isAdmin) return;
         try {
             const jsonStr = JSON.stringify(db);
             const base64Str = btoa(unescape(encodeURIComponent(jsonStr)));
-            navigator.clipboard.writeText(base64Str).then(() => {
-                showAlert('📋 تم نسخ كود التحديث! أرسله للموظفين في رسالة عادية على الواتساب.');
+            const baseUrl = window.location.href.split('?')[0];
+            const fullShareUrl = baseUrl + '?update=' + base64Str;
+            
+            navigator.clipboard.writeText(fullShareUrl).then(() => {
+                showAlert('📋 تم نسخ رابط التحديث الفوري! أرسله للموظفين في الواتساب، وبمجرد نقرهم عليه ستفتح الأسعار جاهزة بالكامل!');
             }).catch(() => {
-                prompt('انسخ هذا الكود وأرسله للشباب:', base64Str);
+                prompt('انسخ الرابط التالي للشباب:', fullShareUrl);
             });
         } catch(err) {
-            alert('حدث خطأ أثناء نسخ الكود.');
-        }
-    }
-
-    // 🔄 استيراد وقراءة الكود النصي وسحب البيانات فوراً (تصلح للآيفون والكمبيوتر والأندرويد)
-    function importDataCode() {
-        const code = document.getElementById('import-code-input').value.trim();
-        if(!code) return alert('الرجاء لصق الكود أولاً المتلقى من المسؤول!');
-        try {
-            const decodedData = JSON.parse(decodeURIComponent(escape(atob(code))));
-            if(decodedData && decodedData.pvc) {
-                db = { ...db, ...decodedData };
-                saveLocal();
-                renderProducts();
-                document.getElementById('import-code-input').value = '';
-                alert('✅ مبروك! تم سحب وتحديث كامل قوائم الأسعار بنجاح تام على هذا الجهاز!');
-            } else {
-                alert('الكود المدخل غير صحيح أو تالف.');
-            }
-        } catch(e) {
-            alert('❌ فشل التحديث. تأكد من نسخ الكود بالكامل بدون نقصان.');
+            alert('حجم المنتجات كبير جداً.');
         }
     }
     
@@ -285,7 +278,7 @@
         });
     }
     
-    function addProduct(e) { e.preventDefault(); if(!isAdmin) return; if(!db[currentCategory]) db[currentCategory] = []; db[currentCategory].push({ name: document.getElementById('prod-name').value, wholesale: document.getElementById('prod-wholesale').value, retail: document.getElementById('prod-retail').value }); saveLocal(); renderProducts(); document.getElementById('add-product-form').reset(); showAlert('✅ تم حفظ المنتج بنجاح.'); switchAction('view'); }
+    function addProduct(e) { e.preventDefault(); if(!isAdmin) return; if(!db[currentCategory]) db[currentCategory] = []; db[currentCategory].push({ name: document.getElementById('prod-name').value, wholesale: document.getElementById('prod-wholesale').value, retail: document.getElementById('prod-retail').value }); saveLocal(); renderProducts(); document.getElementById('add-product-form').reset(); showAlert('✅ تم حفظ المنتج بنجاح! اضغط زر إنشاء الرابط لمشاركته مع الموظفين.'); switchAction('view'); }
 
     function setupEdit(index) {
         if(!isAdmin) return;
@@ -302,7 +295,7 @@
         e.preventDefault(); if(!isAdmin) return;
         const index = document.getElementById('edit-index').value;
         db[currentCategory][index] = { name: document.getElementById('edit-prod-name').value, wholesale: document.getElementById('edit-prod-wholesale').value, retail: document.getElementById('edit-prod-retail').value };
-        saveLocal(); renderProducts(); document.getElementById('tab-edit-btn').style.display = 'none'; showAlert('⚙️ تم التعديل!'); switchAction('view');
+        saveLocal(); renderProducts(); document.getElementById('tab-edit-btn').style.display = 'none'; showAlert('⚙️ تم التعديل! لا تنسى تحديث رابط الموظفين.'); switchAction('view');
     }
 
     function deleteProduct(index) { if(!isAdmin) return; if(confirm("هل أنت متأكد من الحذف؟")) { db[currentCategory].splice(index, 1); saveLocal(); renderProducts(); showAlert('🗑️ تم الحذف.'); } }
